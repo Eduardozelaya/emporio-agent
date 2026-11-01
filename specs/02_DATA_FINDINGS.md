@@ -83,7 +83,7 @@ Active promotion prices (rounded half-up, 2 decimals):
 | Tracking only when shipped/delivered | confirmed/pending/cancelled have no tracking and no estimated delivery | Tool returns `null`, agent explains why |
 | **Total ≠ items** | Order 3: 3,450.00 vs 2 × 1,749.00 = 3,498.00 (−48.00) · Order 20: 1,400.00 vs 799.00 + 689.00 = 1,488.00 (−88.00) | Keep recorded total (D16), flag |
 | **Coming-soon product sold** | Orders 3 (delivered, 2025-11-20) and 14 (pending) contain product 130 (`coming_soon`) | Flag; agent does not promise delivery for 14 → escalate |
-| **Installment rule violated** | Order 9: 349.90 in 6x = 58.32 < 80 · Order 16: 429.90 in 6x = 71.65 < 80 · Order 18 (cancelled): 459.90 in 12x = 38.32 < 100 | Flag only (historical) |
+| **Installment rule violated** | Order 9: 349.90 in 6x = 58.32 < 80 · Order 16: 429.90 in 6x = 71.65 < 80 · Order 18 (cancelled): 459.90 in 12x = 38.33 < 100 | Flag only (historical) |
 | **PIX discount not reflected** | PIX orders 1, 5, 10, 13, 17 have total = list price (no 5 %) | Flag; assumption: totals are pre-discount or the discount was applied at payment |
 | **Stale shipped order** | Order 8 `shipped`, estimated delivery 2026-02-28 (8 months ago) | `needs_attention` → agent escalates |
 | **Stale open orders** | confirmed/pending since 2026-02-20 … 2026-03-22 | `needs_attention` (> 15 days) |
