@@ -3,3 +3,8 @@
 
 *.pdf binary
 *.db  binary
+
+# The challenge files are evidence, not source: store them byte for byte.
+# They ship with CRLF, and `text=auto` would rewrite them to LF on checkout,
+# so a clone would no longer match what the store handed us (E1 AC2).
+data/raw/** -text
