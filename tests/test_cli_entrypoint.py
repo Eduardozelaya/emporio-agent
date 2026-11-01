@@ -22,5 +22,6 @@ def test_no_command_prints_help_and_succeeds(capsys: pytest.CaptureFixture[str])
 
 
 def test_unimplemented_command_fails_cleanly(capsys: pytest.CaptureFixture[str]) -> None:
-    assert main(["build-data"]) == 1
+    """`eval` lands in E6. Never point this at an implemented command: it would really run."""
+    assert main(["eval"]) == 1
     assert "not implemented yet" in capsys.readouterr().err

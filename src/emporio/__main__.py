@@ -43,9 +43,29 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.print_help()
         return 0
 
+    if args.command == "build-data":
+        return _build_data()
+
     # Placeholder until the owning epic lands; keeps `--help` and CI working meanwhile.
     print(f"'{args.command}' is not implemented yet.", file=sys.stderr)
     return 1
+
+
+def _build_data() -> int:
+    from emporio.data_loader import build
+    from emporio.policies import dump_raw_text
+
+    result = build()
+    total = sum(result.row_counts.values())
+    print(f"Built {result.db_path} ({total} rows)")
+    for table, count in result.row_counts.items():
+        print(f"  {table:<13} {count:>4}")
+    print(f"Found {len(result.issues)} data quality issues -> {result.report_path}")
+
+    # The curated policies.md is committed; this dump only exists so it can be diffed
+    # against the PDF (DECISIONS D5).
+    print(f"Refreshed the raw policy extraction -> {dump_raw_text()}")
+    return 0
 
 
 if __name__ == "__main__":
