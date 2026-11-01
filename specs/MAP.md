@@ -21,7 +21,7 @@ Open this first. Reading order for a new session (human or Claude Code):
 
 | Epic | File | Day | Status |
 |---|---|---|---|
-| E0 Foundation | [E0_FOUNDATION](epics/E0_FOUNDATION.md) | Sun | code done, commits pending |
+| E0 Foundation | [E0_FOUNDATION](epics/E0_FOUNDATION.md) | Sun | ✅ done |
 | E1 Data layer | [E1_DATA_LAYER](epics/E1_DATA_LAYER.md) | Sun | todo |
 | E2 Domain rules | [E2_DOMAIN_RULES](epics/E2_DOMAIN_RULES.md) | Sun | todo |
 | E3 Tools | [E3_TOOLS](epics/E3_TOOLS.md) | Sun/Mon | todo |
