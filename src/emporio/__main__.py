@@ -1,0 +1,52 @@
+"""Command line entry point: python -m emporio <command>.
+
+Subcommands are added by later epics (build-data in E1, tool in E3, chat in E5, eval in E6).
+Each one is imported lazily so that `--help` works before those modules exist.
+"""
+
+from __future__ import annotations
+
+import argparse
+import sys
+from collections.abc import Sequence
+
+from emporio import __version__
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="emporio",
+        description="Customer service agent for Empório da Música.",
+    )
+    parser.add_argument("--version", action="version", version=f"emporio {__version__}")
+    sub = parser.add_subparsers(dest="command", metavar="<command>")
+
+    sub.add_parser("build-data", help="Build data/processed/emporio.db from data/raw (E1)")
+
+    chat = sub.add_parser("chat", help="Interactive chat with the agent (E5)")
+    chat.add_argument("--session", help="Resume an existing session id")
+
+    tool = sub.add_parser("tool", help="Call a tool directly, for debugging (E3)")
+    tool.add_argument("name", help="Tool name, e.g. search_products")
+    tool.add_argument("arguments", nargs="?", default="{}", help="JSON object with the arguments")
+
+    sub.add_parser("eval", help="Run the behavioural scenario evaluation (E6)")
+
+    return parser
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    if args.command is None:
+        parser.print_help()
+        return 0
+
+    # Placeholder until the owning epic lands; keeps `--help` and CI working meanwhile.
+    print(f"'{args.command}' is not implemented yet.", file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
