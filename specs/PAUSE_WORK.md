@@ -10,19 +10,19 @@ created: 2026-11-01
 > Newest entry on top. Update at the end of every work session (and before any break longer
 > than an hour). Claude Code must read this before starting.
 
-## ▶️ RESUME HERE — 2026-11-01 (E0 done)
+## ▶️ RESUME HERE — 2026-11-01 (E0 + E2 done)
 
-**State:** E0 complete — 6 commits on `main`, `ruff` + `pytest` green (13 tests). Toolchain
-installed (Python 3.12.10, Git 2.56). The repository exists locally only; it has **not** been
-pushed to GitHub yet.
-**Next:** create the public GitHub repo and push → then E1 (data layer) or E2 (domain rules),
-which are independent of each other.
+**State:** E0 and E2 complete. 9 commits on `main`, published at
+https://github.com/Eduardozelaya/emporio-agent. `ruff` + `pytest` green — **107 tests**, no
+API key needed.
+**Next:** E1 (data layer: raw CSV → `emporio.db` + `policies.md` + quality report). E3 then has
+everything it needs.
 **Deadline:** Tue 2026-11-03 23:59 BRT (DECISIONS D0). Target: tag by Tue ~20:00.
 
 ### Open questions
 - [x] OpenAI key available (D3) — confirmed 2026-11-01.
 - [x] Commit identity — Eduardo Zelaya <eduardo.correia.zelaya@gmail.com>, set per-repo.
-- [ ] Create the public GitHub repo `emporio-agent` and push `main`.
+- [x] Public GitHub repo created and `main` pushed.
 - [ ] Confirm with the recruiter whether the submission really needs a **PDF via Google Forms**:
       the challenge PDF only asks to reply to the e-mail with the repo link. If not required,
       E7-T4 (~1h) can be dropped.
@@ -50,9 +50,12 @@ Also fixed: `db.py`/`llm.py` were missing from the repo layout in 01_ARCHITECTUR
 |---|---|---|---|
 | 2026-11-01 | E0 setup | — | Caught by review: `zoneinfo` has no IANA database on Windows, so `America/Campo_Grande` fails. Added a platform-conditional `tzdata` dependency. |
 | 2026-11-01 | E0-T4 | `.gitattributes` with a blanket `* text=auto eol=lf` | Git was silently rewriting the CRLF endings of the original CSVs. `data/raw` is evidence and must stay byte-identical, so it is now `-text`. Verified the stored blob matches the source file byte count. |
+| 2026-11-01 | E2-T1 | Commit message said "promotion and pix rules" while the diff also carried installments, quote and shipping | Amended before pushing: a commit message that does not describe its diff is worse than a big commit. The history has to be readable by the evaluator. |
+| 2026-11-01 | E2-T1 | Rounding the PIX discount vs rounding the final total | Caught on a failing test: 799.90 × 5 % = 39.995. Chose to round the **discount** (R$ 40,00 → total R$ 759,90) rather than the total (R$ 759,91), because only the first can be printed on a receipt as a real money line. |
 
 ### Session log
 | Date | Done | Commits | Notes |
 |---|---|---|---|
 | 2026-11-01 | Specs | — | Kit created from analysis of challenge, data, manual and my StayBot project |
-| 2026-11-01 | Spec review + E0 | `de0b52a`…`a` (6) | Verified every data finding against the raw CSVs; closed 5 spec gaps (D18, D19, D20, A14, limit); built package, config, CLI stub, 13 tests, CI workflow |
+| 2026-11-01 | Spec review + E0 | `de0b52a`…`d5e9b35` (7) | Verified every data finding against the raw CSVs; closed 5 spec gaps (D18, D19, D20, A14, limit); built package, config, CLI stub, 13 tests, CI workflow; repo pushed |
+| 2026-11-01 | E2 | `92e1862`, `2726e29` | `pricing.py` (promo, PIX, tiers, shipping) and `store_hours.py` (hours, national holidays, SLA). 107 tests green |
