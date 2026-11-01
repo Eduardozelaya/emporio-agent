@@ -46,6 +46,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "build-data":
         return _build_data()
 
+    if args.command == "tool":
+        return _call_tool(args.name, args.arguments)
+
     # Placeholder until the owning epic lands; keeps `--help` and CI working meanwhile.
     print(f"'{args.command}' is not implemented yet.", file=sys.stderr)
     return 1
@@ -66,6 +69,17 @@ def _build_data() -> int:
     # against the PDF (DECISIONS D5).
     print(f"Refreshed the raw policy extraction -> {dump_raw_text()}")
     return 0
+
+
+def _call_tool(name: str, raw_arguments: str) -> int:
+    """Run one tool straight from the shell, exactly as the agent loop would see it."""
+    import json
+
+    from emporio.tools import dispatch
+
+    result = dispatch(name, raw_arguments, session_id="cli-debug")
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 1 if "error" in result else 0
 
 
 if __name__ == "__main__":
