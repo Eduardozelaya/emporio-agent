@@ -10,13 +10,13 @@ created: 2026-11-01
 > Newest entry on top. Update at the end of every work session (and before any break longer
 > than an hour). Claude Code must read this before starting.
 
-## ▶️ RESUME HERE — 2026-11-01 (E0, E1, E2 done)
+## ▶️ RESUME HERE — 2026-11-01 (E0–E3 done)
 
-**State:** E0, E1 and E2 complete, published at
-https://github.com/Eduardozelaya/emporio-agent. `ruff` + `pytest` green — **198 tests**, no
-API key needed. `emporio.db` builds from raw in one command, 19 data-quality findings
-reported, `policies.md` curated and guarded by tests.
-**Next:** E3 (the six tools). Everything it depends on is in place.
+**State:** E0, E1, E2 and E3 complete, published at
+https://github.com/Eduardozelaya/emporio-agent. `ruff` + `pytest` green — **258 tests**, no
+API key needed. The six tools work end to end and can be driven by hand with
+`python -m emporio tool <name> '<json>'`.
+**Next:** E4 (prompt + LLM client + tool loop). This is the first epic that needs the API key.
 **Deadline:** Tue 2026-11-03 23:59 BRT (DECISIONS D0). Target: tag by Tue ~20:00.
 
 ### Open questions
@@ -54,6 +54,9 @@ Also fixed: `db.py`/`llm.py` were missing from the repo layout in 01_ARCHITECTUR
 | 2026-11-01 | E2-T1 | Rounding the PIX discount vs rounding the final total | Caught on a failing test: 799.90 × 5 % = 39.995. Chose to round the **discount** (R$ 40,00 → total R$ 759,90) rather than the total (R$ 759,91), because only the first can be printed on a receipt as a real money line. |
 | 2026-11-01 | E1 | E0's CLI test used `build-data` as its example of an unimplemented command | Once E1 implemented it, the test silently ran a real build against the working tree. Repointed at `eval`; a test must never depend on a command staying unimplemented. |
 | 2026-11-01 | E1 | — | Found while coding: `specs.strings` means the string **material** (nylon/steel) in Violões/Ukuleles but the string **count** ("6", "4") in Guitarras/Baixos. Deriving it everywhere would have put "6" in a material filter. Only categories 5 and 9 get `strings`/`electric`. |
+| 2026-11-01 | E3-T3 | First name search was a token `LIKE` plus `difflib` on the whole name | Failed two realistic queries: "takamini gd 20" (whole-string similarity is low because the product name is longer) and "violão Yamaha" (no product name contains "violão" — it is the category). Replaced with per-token scoring plus a pass that drops category words. |
+| 2026-11-01 | E3 | `get_order_status` description only said what the tool returns | A failing test exposed it. Tool descriptions are the only routing lever over the model, so each one now names the triggering situation and carries its guardrail; a test asserts both. |
+| 2026-11-01 | E3 | Left a no-op `_unused_imports_guard()` function in `tools.py` | Dead code written to silence an unused import instead of deleting the import. Removed both. |
 
 ### Session log
 | Date | Done | Commits | Notes |
@@ -62,3 +65,4 @@ Also fixed: `db.py`/`llm.py` were missing from the repo layout in 01_ARCHITECTUR
 | 2026-11-01 | Spec review + E0 | `de0b52a`…`d5e9b35` (7) | Verified every data finding against the raw CSVs; closed 5 spec gaps (D18, D19, D20, A14, limit); built package, config, CLI stub, 13 tests, CI workflow; repo pushed |
 | 2026-11-01 | E2 | `92e1862`, `2726e29` | `pricing.py` (promo, PIX, tiers, shipping) and `store_hours.py` (hours, national holidays, SLA). 107 tests green |
 | 2026-11-01 | E1 | see below | `data_loader.py` → `emporio.db` + `reports/data_quality.md` (19 findings); `policies.py` + curated `policies.md`. 198 tests green |
+| 2026-11-01 | E3 | see below | `db.py` (read-only store / writable app) and `tools.py` with the six tools, schema export, safe dispatcher and the `tool` debug command. 258 tests green |
