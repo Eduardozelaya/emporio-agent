@@ -1,0 +1,29 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# generated data (rebuilt by `python -m emporio build-data`)
+data/processed/*.db
+data/processed/policies_raw.txt
+*.db
+*.sqlite
+
+# runtime
+logs/
+
+# os / editors
+.DS_Store
+.idea/
+.vscode/

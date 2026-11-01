@@ -1,0 +1,5 @@
+# Normalise line endings so the repo is identical on Windows, Linux and CI.
+* text=auto eol=lf
+
+*.pdf binary
+*.db  binary
