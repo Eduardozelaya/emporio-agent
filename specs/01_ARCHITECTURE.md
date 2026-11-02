@@ -127,7 +127,7 @@ Money values are numbers in BRL with 2 decimals.
 
 | Tool | Arguments | Returns (success) | Error codes |
 |---|---|---|---|
-| `search_products` | `query?` str, `category?` enum(category names), `min_price?`, `max_price?` number, `strings?` enum(nylon, steel), `electric?` bool, `include_unavailable` bool=false, `limit` int=12 (≤15) | `{items:[{product_id, name, category, price, promo:{percent, price}\|null, availability, stock}], total_found, filters_applied}` | `invalid_arguments` |
+| `search_products` | `query?` str, `category?` enum(category names), `min_price?`, `max_price?` number, `strings?` enum(nylon, steel), `electric?` bool, `include_unavailable` bool=false. **No `limit`** — it was an argument until live evaluation showed the model setting it to 5 (D22) | `{items:[{product_id, name, category, price, promo:{percent, price}\|null, availability, stock}], total_found, filters_applied}` | `invalid_arguments` |
 | `get_product` | `product_id?` int, `name?` str (one required) | `{product:{..., description, specs}}` or `{matches:[{product_id,name,price}]}` when ambiguous | `not_found`, `invalid_arguments` |
 | `list_active_promotions` | — | `{items:[{product_id, name, original_price, percent, promo_price, availability}]}` | — |
 | `quote_price` | `product_id` int, `payment_method` enum(pix, debit, credit, boleto), `installments?` int 1–12, `quantity` int=1, `delivery` enum(pickup, metro_campo_grande, other_city)=pickup | `{unit_price, promo, subtotal, pix_discount, final_total, shipping:{cost\|null, free_reason\|null, rule}, grand_total\|null, installments:{requested, allowed, value, reason}, max_installments_allowed, notes[]}` | `not_found`, `not_for_sale` (discontinued/coming_soon), `invalid_arguments` |

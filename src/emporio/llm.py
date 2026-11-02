@@ -89,8 +89,10 @@ class LLMClient:
     #: response, not just the connection. Lesson from a production bot.
     RETRIES = 1
 
-    #: Rate limits clear on their own, so they get their own, more patient budget.
-    RATE_LIMIT_RETRIES = 3
+    #: Rate limits clear on their own, so they get their own, more patient budget. Raised
+    #: from 3 after a live run gave up with the provider asking for only 6.7 s more — on a
+    #: shared free-tier quota, a few consecutive refusals are normal.
+    RATE_LIMIT_RETRIES = 5
 
     #: Never sit on a customer's message for longer than this waiting for a quota to reset.
     MAX_RATE_LIMIT_WAIT_S = 75.0

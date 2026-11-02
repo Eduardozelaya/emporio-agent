@@ -190,6 +190,29 @@ Documented in the README as a known operational limitation.
 - **Consequence:** `final_total` keeps meaning "goods only" and `grand_total` means "delivered";
   the prompt forbids calling `final_total` the final price when delivery was mentioned.
 
+### D22 — Don't give the model a knob it misuses
+- **Context:** `search_products` took a `limit` argument, default 12. The answer style tells the
+  agent to *show* at most five products per message. In live runs the model repeatedly sent
+  `limit=5`, conflating what it writes with what it fetches — so when the customer then asked
+  "which is best for a beginner?", it was recommending from five products out of thirty-three.
+- **Options:** reword the prompt (tried twice, still ignored) · reword the argument description ·
+  **remove the argument**.
+- **Decision:** remove it. The function keeps a fixed `SEARCH_RESULT_LIMIT = 12`, and
+  `total_found` has always reported the real count, so the knob bought nothing.
+- **Consequence:** the failure mode is impossible rather than discouraged. General rule worth
+  keeping: when the model misuses a parameter, the cheapest fix is often to stop exposing it.
+
+### D23 — A complaint opens a ticket in the same turn
+- **Context:** evaluation scenario S14 ("my guitar arrived with a cracked top") failed. The
+  agent was empathetic and asked for the order number, which reads fine — but it ended the turn
+  with **no ticket**, and the manual §7.3 says to register and forward, with a 24-business-hour
+  reply. A conversation that drifts away never registers the complaint at all.
+- **Decision:** a complaint calls `escalate_to_human` **before** replying, even with details
+  missing; the summary carries what is known so far. Asking for the order number comes after,
+  and the customer is told the ticket number and the deadline.
+- **Consequence:** promoted from a bullet in the escalation list to a numbered golden rule,
+  because the model treated the list as advice.
+
 ### D20 — Customer first name returned after verification
 - **Context:** manual §7.2 tells the attendant to greet the customer by name "if available", but
   D8 keeps the customer table away from the LLM, so the name is never available — an instruction

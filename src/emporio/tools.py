@@ -72,6 +72,15 @@ STALE_OPEN_ORDER_DAYS = 15
 #: Below this many digits a phone fragment is not specific enough to prove ownership.
 MIN_PHONE_DIGITS = 8
 
+#: How many products a search returns. Deliberately NOT an argument the model can set.
+#:
+#: It used to be one, defaulting to 12. The model kept sending `limit=5` because the prompt
+#: says to *show* at most five per message, and no amount of rewording stopped it. A search
+#: that returns five products leaves the agent recommending from five when thirty-three
+#: exist. `total_found` always reports the real count, so the knob bought nothing and cost
+#: accuracy: the fix is to take it away.
+SEARCH_RESULT_LIMIT = 12
+
 
 def money(value: Decimal | float | int) -> float:
     """Decimal -> the 2-decimal float the model sees."""
@@ -103,7 +112,6 @@ class SearchProductsArgs(BaseModel):
         default=False,
         description="true para incluir esgotados, descontinuados e lançamentos futuros.",
     )
-    limit: int = Field(default=12, ge=1, le=15)
 
 
 class GetProductArgs(BaseModel):
@@ -123,7 +131,14 @@ class ListActivePromotionsArgs(BaseModel):
 
 class QuotePriceArgs(BaseModel):
     product_id: int
-    payment_method: Literal["pix", "debit", "credit", "boleto"]
+    payment_method: Literal["pix", "debit", "credit", "boleto"] = Field(
+        default="pix",
+        description=(
+            "Forma de pagamento principal da cotação. Se o cliente não disse qual, deixe o "
+            "padrão: a resposta traz o total de todas as formas em `by_payment_method`, "
+            "então você não precisa perguntar antes de cotar."
+        ),
+    )
     installments: int | None = Field(default=None, description="Só para crédito, de 1 a 12.")
     quantity: int = Field(default=1, ge=1, le=20)
     delivery: Literal["pickup", "metro_campo_grande", "other_city"] = Field(
@@ -220,11 +235,11 @@ def search_products(args: SearchProductsArgs, settings: Settings) -> dict[str, A
     with connect_store(settings) as connection:
         rows = connection.execute(sql, params).fetchall()
 
-    items = [_product_row_to_item(row, row["promo_percent"]) for row in rows[: args.limit]]
+    items = [_product_row_to_item(row, row["promo_percent"]) for row in rows[:SEARCH_RESULT_LIMIT]]
     return {
         "items": items,
-        # Always the full count, even when `limit` truncated the list, so the agent can say
-        # "temos 35 violões" instead of implying the catalogue holds only what it received.
+        # Always the full count, even when the list was truncated, so the agent can say
+        # "temos 33 violões" instead of implying the catalogue holds only what it received.
         "total_found": len(rows),
         "filters_applied": args.model_dump(exclude_none=True),
     }
@@ -397,10 +412,23 @@ def quote_price(args: QuotePriceArgs, settings: Settings) -> dict[str, Any]:
     except pricing.PricingError as exc:
         return error(exc.code, exc.message)
 
+    # Every method in one call, so "quanto fica?" never needs a round trip just to learn
+    # which card the customer intends to use.
+    by_method: dict[str, float] = {}
+    for method in ("pix", "debit", "credit", "boleto"):
+        try:
+            alternative = pricing.quote(
+                product, payment_method=method, quantity=args.quantity, delivery=args.delivery
+            )
+        except pricing.PricingError:  # pragma: no cover - the product is sellable by now
+            continue
+        by_method[method] = money(alternative.final_total)
+
     return {
         "product_id": result.product_id,
         "name": result.name,
         "payment_method": result.payment_method,
+        "by_payment_method": by_method,
         "quantity": result.quantity,
         "unit_price": money(result.unit_price),
         "promo": (
@@ -589,9 +617,11 @@ TOOL_DESCRIPTIONS = {
         "cite uma campanha do calendário da loja."
     ),
     "quote_price": (
-        "Calcula o valor final por forma de pagamento (PIX, débito, crédito com parcelas, "
-        "boleto) e, se o cliente falar em entrega, o frete. Use SEMPRE que precisar informar "
-        "valor no PIX, parcelamento, total ou frete. NUNCA calcule de cabeça."
+        "Calcula o valor final de um produto e, se o cliente falar em entrega, o frete. Use "
+        "SEMPRE que precisar informar valor no PIX, parcelamento, total ou frete. NUNCA "
+        "calcule de cabeça. A resposta traz o total de TODAS as formas de pagamento em "
+        "`by_payment_method`, então não pergunte a forma de pagamento antes de cotar: cote "
+        "primeiro e apresente as opções."
     ),
     "get_order_status": (
         "Consulta a situação de um pedido. Use quando o cliente perguntar onde está o pedido, "

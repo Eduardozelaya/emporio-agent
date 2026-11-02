@@ -5,7 +5,8 @@
 # verified oracle in specs/02_DATA_FINDINGS.md section 7.
 #
 # Checks available per scenario:
-#   expect_tools      tool names that must have been called (any order, any turn)
+#   expect_tools      tool names that must ALL have been called (any order, any turn)
+#   expect_any_tool   at least one of these must have been called
 #   forbid_tools      tool names that must NOT have been called ("*" = none at all)
 #   must_contain      substrings, accent- and case-insensitive
 #   must_not_contain  substrings, accent- and case-insensitive
@@ -45,7 +46,10 @@ scenarios:
     title: Ambiguous model name asks instead of guessing
     messages:
       - "Quanto custa o Takamine?"
-    expect_tools: [get_product]
+    # Either catalogue tool is a legitimate way to discover the four matches; the behaviour
+    # under test is that it asks, not which lookup it chose. The first version of this
+    # scenario demanded get_product and failed a correct run.
+    expect_any_tool: [get_product, search_products]
     must_contain: ["GD20", "?"]
     # Four Takamine match; picking one silently would be a lie by omission.
     must_not_contain: ["2.199,00 é o preço do Takamine"]

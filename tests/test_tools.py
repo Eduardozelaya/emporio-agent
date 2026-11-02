@@ -85,9 +85,27 @@ def test_empty_category_is_an_empty_list_not_an_error(settings) -> None:
 
 
 def test_total_found_reports_the_full_count_not_the_page(settings) -> None:
-    result = call("search_products", {"category": "Violões", "limit": 3}, settings)
-    assert len(result["items"]) == 3
+    """33 sellable violões, 12 returned: the agent must still be able to say 33."""
+    result = call("search_products", {"category": "Violões"}, settings)
+    assert len(result["items"]) == tools.SEARCH_RESULT_LIMIT
     assert result["total_found"] == 33  # 35 violões minus the two not for sale
+
+
+def test_the_model_cannot_shrink_a_search(settings) -> None:
+    """`limit` was an argument until a live run showed the model setting it to 5.
+
+    It kept confusing "show at most five per message" with "fetch five", which left the
+    agent recommending from five products when thirty-three existed. The argument is gone,
+    and an attempt to send it is ignored rather than honoured.
+    """
+    assert "limit" not in tools.SearchProductsArgs.model_fields
+    schema = next(
+        s for s in tools.tool_schemas() if s["function"]["name"] == "search_products"
+    )
+    assert "limit" not in schema["function"]["parameters"]["properties"]
+
+    result = call("search_products", {"category": "Violões", "limit": 5}, settings)
+    assert len(result["items"]) == tools.SEARCH_RESULT_LIMIT
 
 
 def test_search_carries_the_active_promotion(settings) -> None:
@@ -171,6 +189,25 @@ def test_quote_pix(settings) -> None:
     result = call("quote_price", {"product_id": 95, "payment_method": "pix"}, settings)
     assert result["final_total"] == 2089.05
     assert result["max_installments_allowed"] == 12
+
+
+def test_quote_returns_every_payment_method_in_one_call(settings) -> None:
+    """So "quanto fica?" never needs a round trip to learn which card the customer has.
+
+    Live evaluation showed the agent asking for the payment method before it could quote,
+    because `payment_method` was a required argument.
+    """
+    result = call("quote_price", {"product_id": 95}, settings)
+    assert result["by_payment_method"] == {
+        "pix": 2089.05,  # 5% off the list price
+        "debit": 2199.00,
+        "credit": 2199.00,
+        "boleto": 2199.00,
+    }
+
+
+def test_payment_method_is_optional(settings) -> None:
+    assert "payment_method" not in tools.QuotePriceArgs.model_json_schema().get("required", [])
 
 
 def test_quote_installments(settings) -> None:
@@ -402,14 +439,20 @@ def test_invalid_json_string(settings) -> None:
 
 def test_json_string_arguments_are_accepted(settings) -> None:
     """This is the shape the LLM actually sends."""
-    result = dispatch("search_products", '{"category": "Ukuleles", "limit": 2}', settings=settings)
-    assert len(result["items"]) == 2
+    result = dispatch("search_products", '{"category": "Ukuleles"}', settings=settings)
+    assert result["total_found"] == 14  # 15 ukuleles minus the one not released
 
 
 def test_invalid_arguments_explain_themselves(settings) -> None:
-    result = call("search_products", {"limit": 999}, settings)
+    result = call("search_products", {"category": "Flautas Doces"}, settings)
     assert result["error"] == "invalid_arguments"
-    assert "limit" in result["message"]
+    assert "category" in result["message"]
+
+
+def test_an_argument_the_model_invented_is_ignored_not_fatal(settings) -> None:
+    """Being strict here would turn a harmless hallucination into a failed turn."""
+    result = call("search_products", {"category": "Ukuleles", "cor": "azul"}, settings)
+    assert "error" not in result
 
 
 def test_dispatcher_never_raises(settings) -> None:

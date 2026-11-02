@@ -139,6 +139,14 @@ def test_expected_tool_present_passes() -> None:
     assert not failures(checks)
 
 
+def test_expect_any_tool_accepts_either_route() -> None:
+    """Looking up 'Takamine' with search_products or get_product is equally correct."""
+    spec = {"expect_any_tool": ["get_product", "search_products"], "numbers_grounded": False}
+    assert not failures(run_checks(spec, "qual deles?", tools=["search_products"]))
+    assert not failures(run_checks(spec, "qual deles?", tools=["get_product"]))
+    assert failures(run_checks(spec, "qual deles?", tools=["quote_price"]))
+
+
 def test_forbidden_tool_fails() -> None:
     checks = run_checks(
         {"forbid_tools": ["get_order_status"], "numbers_grounded": False},
@@ -188,7 +196,7 @@ def test_scenarios_file_is_valid() -> None:
         ids.add(spec["id"])
         assert spec["messages"], spec["id"]
         assert spec.get("title"), spec["id"]
-        for name in spec.get("expect_tools") or []:
+        for name in (spec.get("expect_tools") or []) + (spec.get("expect_any_tool") or []):
             assert name in known_tools, f"{spec['id']} expects unknown tool {name}"
         for name in spec.get("forbid_tools") or []:
             assert name in known_tools or name == "*", f"{spec['id']} forbids unknown tool {name}"
@@ -199,6 +207,7 @@ def test_every_scenario_has_at_least_one_assertion() -> None:
     for spec in scenarios:
         assertions = (
             (spec.get("expect_tools") or [])
+            + (spec.get("expect_any_tool") or [])
             + (spec.get("forbid_tools") or [])
             + (spec.get("must_contain") or [])
             + (spec.get("must_not_contain") or [])

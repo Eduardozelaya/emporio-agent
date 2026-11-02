@@ -113,6 +113,18 @@ def evaluate(
             )
         )
 
+    # For scenarios where several tools are a legitimate route to the same behaviour.
+    alternatives = spec.get("expect_any_tool") or []
+    if alternatives:
+        hit = [name for name in alternatives if name in tools_called]
+        checks.append(
+            Check(
+                f"calls one of {alternatives}",
+                bool(hit),
+                "" if hit else f"tools called: {tools_called or 'none'}",
+            )
+        )
+
     forbidden = spec.get("forbid_tools") or []
     if forbidden == ["*"]:
         checks.append(
@@ -269,8 +281,16 @@ def main(only: list[str] | None = None) -> int:
     policies.load_policies(settings)  # fail early if the manual is missing
 
     defaults, scenarios = load_scenarios()
+    # A partial run writes somewhere else: `--only S14` once overwrote the committed report
+    # of a full run with four lines, which is exactly the sort of thing nobody notices until
+    # the report is the deliverable.
+    destination = RESULTS_PATH
     if only:
         scenarios = [s for s in scenarios if s["id"] in only]
+        destination = RESULTS_PATH.with_name("results_partial.md")
+        if not scenarios:
+            print(f"No scenario matches {only}.")
+            return 1
 
     results: list[ScenarioResult] = []
     for i, spec in enumerate(scenarios, 1):
@@ -283,9 +303,9 @@ def main(only: list[str] | None = None) -> int:
             if not check.passed:
                 print(f"        x {check.name}: {check.detail}", flush=True)
 
-    RESULTS_PATH.parent.mkdir(parents=True, exist_ok=True)
-    RESULTS_PATH.write_text(render_report(results, settings), encoding="utf-8")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(render_report(results, settings), encoding="utf-8")
 
     passed = sum(1 for r in results if r.passed)
-    print(f"\n{passed}/{len(results)} scenarios passed -> {RESULTS_PATH}")
+    print(f"\n{passed}/{len(results)} scenarios passed -> {destination}")
     return 0 if passed == len(results) else 1

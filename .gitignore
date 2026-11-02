@@ -27,3 +27,6 @@ logs/
 .DS_Store
 .idea/
 .vscode/
+
+# partial evaluation runs (--only); the committed report is results.md
+eval/results_partial.md
