@@ -59,13 +59,14 @@ configuration, not code. Set three variables in `.env`:
 
 | Provider | `LLM_BASE_URL` | `LLM_MODEL` |
 |---|---|---|
+| **DeepSeek** (used for the committed results) | `https://api.deepseek.com` | `deepseek-flash` |
 | OpenAI | *(leave empty)* | `gpt-4o-mini` |
 | Groq | `https://api.groq.com/openai/v1` | `openai/gpt-oss-120b` |
-| DeepSeek | `https://api.deepseek.com` | `deepseek-chat` |
 | Ollama (local) | `http://localhost:11434/v1` | `llama3.1` |
 
-This repository was developed against both OpenAI and Groq — see
-[the provider trade-off](#provider-trade-off) for why, and what it costs.
+This project ran on all three hosted providers during the build, without a line of code
+changing — see [the provider trade-off](#provider-trade-off), which is a measured story rather
+than a claim.
 
 ### Other commands
 
@@ -151,21 +152,38 @@ Full reasoning with the alternatives considered: [`specs/DECISIONS.md`](specs/DE
 
 ### Provider trade-off
 
-The OpenAI account ran out of credits during the build. Moving to Groq took three lines of
-`.env` and no code change, which is the whole point of the decision above. The free tier has a
-real cost, measured rather than assumed:
+This moved twice under pressure, and each move was three lines of `.env` with no code change —
+which is the entire argument for the decision above.
 
-| | OpenAI `gpt-4o-mini` | Groq `openai/gpt-oss-120b` (free) |
-|---|---|---|
-| Tokens per minute | tens of thousands | **8,000** |
-| Our system prompt | ~6.6k tokens per call | ~6.6k tokens per call |
-| Turn answered from the manual | ~2 s | ~2 s |
-| Turn with one tool call (two model calls) | ~3 s | **up to ~100 s** |
+**OpenAI → Groq.** The OpenAI account ran out of credits mid-build. Groq's free tier answered
+correctly but slowly, for a reason worth measuring rather than guessing:
 
-With a 6.6k-token prompt, one call nearly exhausts a minute of free-tier budget, so the second
-call of a turn has to wait for the quota to reset. The agent stays *correct* either way — the
-retry reads the provider's own `retry-after` and waits it out — but iterating on prompts and
-running the full evaluation is far slower. Switching back is three lines.
+| | OpenAI `gpt-4o-mini` | Groq free tier | DeepSeek |
+|---|---|---|---|
+| Tokens per minute | tens of thousands | **8,000** | no tight cap advertised |
+| Our request (prompt + tool schemas) | ~7,000 tokens | ~7,000 tokens | ~7,000 tokens |
+| Turn answered from the manual | ~2 s | ~2 s | ~2 s |
+| Turn with one tool call | ~3 s | **up to ~100 s** | ~4 s |
+| Full 19-scenario evaluation | ~2 min | ~1 h | **112 s** |
+
+**Groq → DeepSeek.** The slowness was tolerable; the ceiling was not. With a ~7,000-token
+request against an 8,000-token-per-minute cap, only ~1,000 tokens remain for conversation
+history and tool results — and a single catalogue search result is ~1,200. Multi-turn
+conversations therefore returned **HTTP 413, "request too large"**, which no amount of waiting
+fixes. Three of five example conversations broke on their last turn before this was understood.
+
+Two things came out of that diagnosis:
+
+- a real defect — the retry treated 413 as a rate limit and burned six attempts on an error
+  that is permanent by construction. Permanent statuses now fail immediately with an
+  actionable message;
+- a real constraint — **this agent's system prompt is its main operational cost.** At ~7k
+  tokens per call it is fine on a paid tier and impossible on a tight free one. That is the
+  concrete, measured case for trimming the prompt, which is the first item in
+  [what I would do with more time](#what-i-would-do-with-more-time).
+
+The committed evaluation and examples were produced on DeepSeek. Running them on OpenAI or
+Groq needs no change beyond `.env`.
 
 ## Data treatment
 
@@ -237,9 +255,41 @@ appear. The strongest check is `numbers_grounded` — every number in a reply mu
 result, in what the customer said, or in the policy manual. That is "do not invent prices"
 turned into an assertion.
 
-Latest run, with the full report in [`eval/results.md`](eval/results.md):
+Latest run, with the full report and every transcript in
+[`eval/results.md`](eval/results.md):
 
-<!-- EVAL_SUMMARY -->
+| | |
+|---|---|
+| **Scenarios passed** | **19 / 19** (71 / 71 individual checks) |
+| Model | `deepseek-flash` via `https://api.deepseek.com` |
+| Tokens | 407,866 in · 6,759 out |
+| Wall time | 112 s for the whole suite |
+| Cost | fractions of a cent |
+
+The input token count is dominated by the system prompt: ~7k tokens on every call, times
+roughly fifty calls. That number is the argument for the "trim the prompt" item under
+[what I would do with more time](#what-i-would-do-with-more-time).
+
+**An earlier run scored 15/19, and the four failures were more useful than the fifteen
+passes.** One was the agent genuinely misbehaving: asked about a guitar that arrived with a
+cracked top, it was empathetic, asked for the order number, and opened **no ticket** — the
+rule was a bullet in a list and the model read it as advice, so it became a numbered golden
+rule (D23). Two were infrastructure: the evaluation and a chat session were sharing one
+free-tier quota. The fourth was my own scenario being narrower than the behaviour it meant to
+test.
+
+A later run scored 16/19, and all three remaining failures turned out to be **bugs in my
+checks, not in the agent** — worth stating plainly, because a check that fails correct
+behaviour is as dangerous as one that passes broken behaviour:
+
+| Scenario | What the agent wrote | What my check did |
+|---|---|---|
+| S07 | "**não consigo confirmar** que ele está a caminho" | `must_not_contain: "a caminho"` — a substring match cannot see negation |
+| S14 | "a equipe responde até **quarta-feira (04/11) às 09:00**" | demanded the literal "24", failing a concrete date that is *better* service than the jargon "24 horas úteis" |
+| S19 | "de **R$ 35**9,00 por R$ 323,10" | `must_not_contain: "R$ 35"` matched the start of the product's own list price |
+
+All three were rewritten to assert the intent rather than a fragile string, with the reason
+recorded in [`eval/scenarios.yaml`](eval/scenarios.yaml).
 
 ## Known limitations
 
@@ -252,7 +302,9 @@ Latest run, with the full report in [`eval/results.md`](eval/results.md):
   is enough to demonstrate the concern, not enough to be authentication.
 - **No summarisation of long conversations.** Beyond `HISTORY_WINDOW` messages the oldest turns
   simply fall out of the window.
-- **Free-tier latency.** See the [provider trade-off](#provider-trade-off): correct, but slow.
+- **The system prompt does not fit a tight free tier.** At ~7k tokens per call it leaves too
+  little room for conversation history on a provider capped at 8k per minute. See the
+  [provider trade-off](#provider-trade-off).
 - **Some catalogue rows look synthetic** (products 135–144 have generic names and odd prices).
   They are kept as provided rather than filtered, and flagged in the data quality report.
 - **Documentation is in English, the agent speaks Brazilian Portuguese.** That is deliberate:

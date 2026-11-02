@@ -52,23 +52,36 @@ noted. The README "Technical decisions" section summarises these; this file keep
   *protocol*, not necessarily to OpenAI.
 - **Consequence:** the provider is configuration, not code. Tests never need a key at all.
 
-**This decision earned its keep on day two.** The OpenAI account ran out of credits mid-build
-(HTTP 429, "no credits remaining"). Switching to **Groq** (`openai/gpt-oss-120b`) took three
-lines of `.env` and no code change. Verified working on the challenge's own reference
-questions.
+**This decision earned its keep twice, under pressure, in two days.**
 
-Trade-off of the free tier, measured rather than assumed:
+1. **OpenAI → Groq.** The OpenAI account ran out of credits mid-build (429, "no credits
+   remaining"). Groq `openai/gpt-oss-120b`: three lines of `.env`, no code change.
+2. **Groq → DeepSeek.** Groq's free tier caps a single request at **8,000 tokens**. Our
+   request is ~7,000 (≈5.5k prompt + ≈1.5k tool schemas), leaving ~1,000 for history and tool
+   results — and one catalogue search result is ~1,200. Multi-turn conversations returned
+   **HTTP 413, permanent**, not a rate limit. Three lines again, to `deepseek-flash`.
 
-| | OpenAI `gpt-4o-mini` | Groq `openai/gpt-oss-120b` (free) |
-|---|---|---|
-| Tokens per minute | tens of thousands | **8,000** |
-| Our system prompt | ~6.6k tokens per call | ~6.6k tokens per call |
-| A turn with one tool call | ~3 s | **~100 s** (waits for the quota to reset) |
+Measured, not assumed:
 
-With a 6.6k-token prompt, one call nearly exhausts a minute of free-tier budget, so a
-two-call turn has to wait. The agent is *correct* either way — the wait is handled by the
-retry logic in D21 — but iterating on prompts and running the full evaluation is far slower.
-Documented in the README as a known operational limitation.
+| | OpenAI `gpt-4o-mini` | Groq free | DeepSeek `deepseek-flash` |
+|---|---|---|---|
+| Tokens per minute | tens of thousands | **8,000** | no tight cap advertised |
+| Turn with one tool call | ~3 s | **~100 s**, or 413 | ~4 s |
+| Full 19-scenario evaluation | ~2 min | ~1 h, incomplete | **112 s, 19/19** |
+
+**The lesson is about our design, not about Groq.** A ~7k-token request per call is the
+agent's dominant operational cost, and it is what makes a tight free tier unusable. That is
+the measured case for trimming the prompt — listed in the README as future work, and the
+reason D2 (whole manual in the prompt) carries a real price rather than being free.
+
+### D24 — Permanent provider errors are not retried
+- **Context:** the 413 above was retried six times per turn. A request that exceeds the
+  provider's per-minute ceiling will be refused identically in a minute and tomorrow.
+- **Decision:** statuses 400, 401, 403, 404, 413 and 422 fail immediately; only rate limits and
+  transport errors are retried (D21). A 413 carries a hint naming the three ways out: lower
+  `HISTORY_WINDOW`, shorten the prompt, or change provider.
+- **Consequence:** a permanent failure costs one request instead of six, and the operator is
+  told what to do about it.
 
 ### D21 — Retry honours the provider's own retry hint
 - **Context:** the first live run fell back on every turn. The fallback behaved perfectly, but

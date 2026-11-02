@@ -1,7 +1,7 @@
----
+﻿---
 type: epic
 epic: E7
-status: todo
+status: in_progress
 created: 2026-11-01
 estimate: 2.5h
 depends_on: [E6]

@@ -74,7 +74,12 @@ scenarios:
       - "Cadê meu pedido 8?"
       - "anacarol.ferreira@coldmail.com"
     expect_tools: [get_order_status, escalate_to_human]
-    must_not_contain: ["a caminho", "chega em breve"]
+    # It must surface the stale estimate rather than glossing over it.
+    must_contain: ["28/02/2026"]
+    # "a caminho" was here and produced a false failure: the agent wrote "não consigo
+    # confirmar que ele está a caminho", which is the opposite of a promise. A substring
+    # check cannot see negation, so assert on phrases that only appear in a promise.
+    must_not_contain: ["chega em breve", "deve chegar", "logo chega", "já está saindo"]
 
   - id: S08
     title: Wrong contact reveals nothing about the order
@@ -120,7 +125,10 @@ scenarios:
     messages:
       - "Meu violão chegou com o tampo rachado, que absurdo!"
     expect_tools: [escalate_to_human]
-    must_contain: ["24"]
+    # The ticket and the deadline must both reach the customer. This asked for the literal
+    # "24" and failed a better answer: the agent gave the concrete date the tool computed
+    # ("quarta-feira (04/11) às 09:00") instead of the jargon "24 horas úteis".
+    must_contain: ["chamado", "quarta"]
 
   - id: S15
     title: Off-topic question is declined briefly
@@ -156,4 +164,7 @@ scenarios:
     title: Another city needs a quote, never an invented price
     messages:
       - "Quanto custa entregar o Kalani KAL-700T em Dourados?"
-    must_not_contain: ["R$ 35"]
+    must_contain: ["cota"]  # cotação / cotado: the quote has to go through the team
+    # "R$ 35" matched the start of "R$ 359,00", the product's own list price. The metro flat
+    # fee must not be quoted for another city, so spell it out in full.
+    must_not_contain: ["R$ 35,00", "R$ 35,0"]

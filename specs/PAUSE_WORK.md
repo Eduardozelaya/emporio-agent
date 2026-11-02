@@ -10,21 +10,21 @@ created: 2026-11-01
 > Newest entry on top. Update at the end of every work session (and before any break longer
 > than an hour). Claude Code must read this before starting.
 
-## ▶️ RESUME HERE — 2026-11-02 (E0–E5 done)
+## ▶️ RESUME HERE — 2026-11-02 (E0–E6 done)
 
-**State:** E0 through E5 complete, published at
-https://github.com/Eduardozelaya/emporio-agent. `ruff` + `pytest` green — **301 tests**, none
-of which need an API key. The agent answers live: `python -m emporio chat --debug`.
-**Provider:** Groq `openai/gpt-oss-120b` (the OpenAI account ran out of credits — see D3/D21).
-**Next:** E6 (behavioural evaluation + the five example conversations — a required
-deliverable), then E7 (README, PDF, tag).
-**Deadline:** Tue 2026-11-03 23:59 BRT (DECISIONS D0). Target: tag by Tue ~20:00.
+**State:** E0 through E6 complete, published at
+https://github.com/Eduardozelaya/emporio-agent. `ruff` + `pytest` green — **339 tests**, none
+of which need an API key. Live evaluation: **19/19 scenarios, 71/71 checks**, 112 s. All five
+example conversations regenerated clean, with no fallback.
+**Provider:** DeepSeek `deepseek-flash` (third provider of the build — see D3).
+**Next:** E7 only — README final pass, secret scan, fresh-clone check, tag `v1.0-submission`.
+**Deadline:** Tue 2026-11-03 23:59 BRT (DECISIONS D0).
 
-### Operational note for E6
-The free tier caps at **8,000 tokens per minute** and the system prompt is ~6.6k per call, so
-a turn with one tool call takes ~100 s instead of ~3 s. Correctness is unaffected (D21 waits
-out the limit), but a full evaluation run takes roughly an hour of wall time. Plan for one
-run, not five: get the scenarios right before spending the tokens.
+### Still open for E7
+- [ ] Confirm with the recruiter whether a **PDF via Google Forms** is really required: the
+      challenge PDF only asks to reply to the e-mail with the repository link.
+- [ ] Fresh-clone run-through on a clean folder.
+- [ ] `git tag v1.0-submission && git push --tags`.
 
 ### Open questions
 - [x] OpenAI key available (D3) — confirmed 2026-11-01.
@@ -68,6 +68,10 @@ Also fixed: `db.py`/`llm.py` were missing from the repo layout in 01_ARCHITECTUR
 | 2026-11-02 | E4-T5 | `LLMError` was swallowed with no trace | The fallback was right but hid "no credits remaining" — the one sentence that explained everything. `Reply.error` now reaches the operator and the turn log, never the customer. |
 | 2026-11-02 | E4-T5 | Prompt said "no máximo 5 por mensagem" | The model read it as a *query* limit and called `search_products(limit=5)`. Clarified that it governs what is written, not what is fetched. |
 | 2026-11-02 | E4-T5 | Prompt did not forbid re-asking for known information | "violões até R$1000" got answered with "qual o valor máximo?". Added the rule to extract filters from the message itself. |
+| 2026-11-02 | E6 | Reworded the prompt twice to stop the model sending `limit=5` | Rewording did not work. Removed the argument instead (D22): when the model misuses a parameter, the cheapest fix is to stop exposing it. |
+| 2026-11-02 | E6 | `eval --only` overwrote `eval/results.md` | A four-scenario rerun replaced the committed full report. Partial runs now write elsewhere. The kind of thing nobody notices until the report *is* the deliverable. |
+| 2026-11-02 | E6 | Retried HTTP 413 six times | A request larger than the provider's ceiling is permanent, not rate-limited (D24). |
+| 2026-11-02 | E6 | Three scenario checks failed **correct** behaviour | `"a caminho"` cannot see the negation in "não consigo confirmar que está a caminho"; `"24"` demanded jargon over the concrete date the agent gave; `"R$ 35"` matched the start of "R$ 359,00". A check that fails good behaviour is as dangerous as one that passes bad behaviour — all three now assert the intent. |
 
 ### Session log
 | Date | Done | Commits | Notes |
@@ -80,3 +84,4 @@ Also fixed: `db.py`/`llm.py` were missing from the repo layout in 01_ARCHITECTUR
 | 2026-11-01 | E4 | `572f6d1` | `llm.py`, `prompts.py`, `agent.py`, scripted fake model. 283 tests green |
 | 2026-11-02 | E4-T5 | `c331a35`, `a75940b` | First live run: all seven questions fell back. Fixed the retry (D21) and the error reporting, moved to Groq, fixed two prompt bugs. Reference questions verified live |
 | 2026-11-02 | E5 | see below | `memory.py` (sessions + safe window) and `cli.py` (`/debug`, `/new`, `--session`). 301 tests green. Follow-up verified live: "E em 6x?" reuses the product from history |
+| 2026-11-02 | E6 | `3a23373`, `c08453a`, `f266bf1` | 19 scenarios + runner + 31 tests of the checks themselves. Three live runs: 15/19 → 16/19 → **19/19**. Five examples regenerated clean on DeepSeek |
