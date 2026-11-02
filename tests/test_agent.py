@@ -315,6 +315,67 @@ def test_the_provider_reason_reaches_the_operator_not_the_customer(settings) -> 
     assert "provider" not in reply.text
 
 
+def test_a_request_too_large_is_not_retried(monkeypatch) -> None:
+    """A 413 is permanent: the same request will be refused in a minute and tomorrow.
+
+    Found while generating the example conversations. Treating it as a rate limit cost six
+    pointless retries per turn and still ended in the fallback.
+    """
+    from emporio.llm import LLMClient, is_permanent
+
+    class TooLarge(Exception):
+        status_code = 413
+
+        def __str__(self) -> str:
+            return "Request too large for model: Limit 8000, Requested 8120"
+
+    assert is_permanent(TooLarge())
+
+    class Rejecting:
+        def __init__(self) -> None:
+            self.attempts = 0
+
+        def create(self, **kwargs):  # noqa: ANN003, ARG002
+            self.attempts += 1
+            raise TooLarge()
+
+    rejecting = Rejecting()
+    sdk = type("SDK", (), {"chat": type("Chat", (), {"completions": rejecting})()})()
+    monkeypatch.setattr("time.sleep", lambda _: None)
+
+    with pytest.raises(LLMError, match="per-minute token ceiling"):
+        LLMClient(client=sdk).complete([{"role": "user", "content": "oi"}])
+    assert rejecting.attempts == 1  # tried once, never retried
+
+
+def test_a_rate_limit_is_still_retried(monkeypatch) -> None:
+    from emporio.llm import LLMClient, is_permanent
+
+    class RateLimited(Exception):
+        status_code = 429
+
+        def __str__(self) -> str:
+            return "Rate limit reached. Please try again in 1.5s"
+
+    assert not is_permanent(RateLimited())
+
+    class Limited:
+        def __init__(self) -> None:
+            self.attempts = 0
+
+        def create(self, **kwargs):  # noqa: ANN003, ARG002
+            self.attempts += 1
+            raise RateLimited()
+
+    limited = Limited()
+    sdk = type("SDK", (), {"chat": type("Chat", (), {"completions": limited})()})()
+    monkeypatch.setattr("time.sleep", lambda _: None)
+
+    with pytest.raises(LLMError):
+        LLMClient(client=sdk).complete([{"role": "user", "content": "oi"}])
+    assert limited.attempts > 1
+
+
 def test_max_steps_records_why_it_stopped(settings) -> None:
     llm = FakeLLM(*[calls("list_active_promotions", {}) for _ in range(10)])
     reply = agent.run_turn("s1", "promoções?", settings, llm=llm)

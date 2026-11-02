@@ -32,6 +32,23 @@ def parse_duration(raw: str | None) -> float | None:
     return seconds + (int(minutes) * 60 if minutes else 0)
 
 
+def is_permanent(exc: Exception) -> bool:
+    """True when retrying cannot possibly help.
+
+    A 413 "request too large" is the one that matters here: the request itself exceeds the
+    provider's per-minute token ceiling, so it will be rejected identically in a minute, in an
+    hour and tomorrow. Treating it as a rate limit cost six pointless retries per turn and
+    still ended in the fallback. Authentication and malformed-request errors are the same kind
+    of permanent.
+    """
+    status = getattr(exc, "status_code", None) or getattr(
+        getattr(exc, "response", None), "status_code", None
+    )
+    if status in (400, 401, 403, 404, 413, 422):
+        return True
+    return "too large" in str(exc).lower()
+
+
 def retry_after(exc: Exception) -> float | None:
     """How long the provider asked us to wait, from its headers or its message.
 
@@ -130,6 +147,8 @@ class LLMClient:
                 return self._complete_once(messages, tools)
             except Exception as exc:  # noqa: BLE001 - every provider error is handled alike
                 last_error = exc
+                if is_permanent(exc):
+                    break
                 wait = retry_after(exc)
                 if wait is not None and wait <= self.MAX_RATE_LIMIT_WAIT_S:
                     if rate_limit_retries_left <= 0:
@@ -142,8 +161,15 @@ class LLMClient:
                 plain_retries_left -= 1
                 time.sleep(0.5)
 
+        hint = ""
+        if last_error is not None and "too large" in str(last_error).lower():
+            hint = (
+                " — the request exceeds the provider's per-minute token ceiling. Lower "
+                "HISTORY_WINDOW, shorten the system prompt, or use a provider with more "
+                "headroom."
+            )
         raise LLMError(
-            f"{self.settings.llm_model} failed after {attempts} attempts: {last_error}"
+            f"{self.settings.llm_model} failed after {attempts} attempts: {last_error}{hint}"
         ) from last_error
 
     def _complete_once(
