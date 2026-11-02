@@ -1,4 +1,4 @@
-"""E4 acceptance criteria: the loop, its guards, the prompt layout and the turn log."""
+﻿"""E4 acceptance criteria: the loop, its guards, the prompt layout and the turn log."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ def settings(tmp_path_factory: pytest.TempPathFactory) -> Settings:
     root = tmp_path_factory.mktemp("agent")
     shutil.copytree(REAL_RAW, root / "data" / "raw")
     built = Settings(
-        openai_api_key=None,
+        llm_api_key=None,
         llm_base_url=None,
         llm_model="fake-model",
         llm_temperature=0.0,
@@ -302,6 +302,23 @@ def test_fallback_is_flagged_in_the_log(settings, tmp_path) -> None:
     agent.run_turn("s1", "oi", settings, llm=AlwaysFailingLLM())
     entry = json.loads((tmp_path / "turns.jsonl").read_text(encoding="utf-8").splitlines()[-1])
     assert entry["fallback"] is True
+
+
+def test_the_provider_reason_reaches_the_operator_not_the_customer(settings) -> None:
+    """A 429 "no credits remaining" is useless to a customer and essential to us.
+
+    Found during the first live run: the fallback behaved correctly but swallowed the only
+    sentence that explained why nothing worked.
+    """
+    reply = agent.run_turn("s1", "oi", settings, llm=AlwaysFailingLLM())
+    assert "provider unreachable" in reply.error
+    assert "provider" not in reply.text
+
+
+def test_max_steps_records_why_it_stopped(settings) -> None:
+    llm = FakeLLM(*[calls("list_active_promotions", {}) for _ in range(10)])
+    reply = agent.run_turn("s1", "promoções?", settings, llm=llm)
+    assert "tool steps" in reply.error
 
 
 def test_token_usage_accumulates_over_the_steps(settings) -> None:

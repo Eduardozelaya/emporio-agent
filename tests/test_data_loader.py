@@ -1,4 +1,4 @@
-"""E1 acceptance criteria, checked against the real challenge files.
+﻿"""E1 acceptance criteria, checked against the real challenge files.
 
 The oracle is specs/02_DATA_FINDINGS.md: if these tests pass, the document is reproduced.
 """
@@ -27,7 +27,7 @@ def built(tmp_path_factory: pytest.TempPathFactory):
     root = tmp_path_factory.mktemp("emporio")
     shutil.copytree(REAL_RAW, root / "data" / "raw")
     settings = Settings(
-        openai_api_key=None,
+        llm_api_key=None,
         llm_base_url=None,
         llm_model="test",
         llm_temperature=0.0,
@@ -130,7 +130,7 @@ def test_every_table_and_the_view_exist(db) -> None:
 def test_build_is_idempotent(built) -> None:
     """AC1: a second run must give the same result, not duplicate rows."""
     settings = Settings(
-        openai_api_key=None,
+        llm_api_key=None,
         llm_base_url=None,
         llm_model="test",
         llm_temperature=0.0,

@@ -9,11 +9,45 @@ swapping provider is configuration, not code (DECISIONS D3).
 
 from __future__ import annotations
 
+import re
 import time
 from dataclasses import dataclass, field
 from typing import Any
 
 from emporio.config import Settings, get_settings
+
+#: "42.1875s", "577ms", "1m30s" — the shapes providers use for a retry delay.
+_DURATION = re.compile(r"(?:(\d+)m)?(\d+(?:\.\d+)?)(ms|s)?")
+
+
+def parse_duration(raw: str | None) -> float | None:
+    """Seconds from a provider's retry hint, or None when it is not one."""
+    if not raw:
+        return None
+    match = _DURATION.fullmatch(raw.strip())
+    if not match:
+        return None
+    minutes, value, unit = match.groups()
+    seconds = float(value) / 1000 if unit == "ms" else float(value)
+    return seconds + (int(minutes) * 60 if minutes else 0)
+
+
+def retry_after(exc: Exception) -> float | None:
+    """How long the provider asked us to wait, from its headers or its message.
+
+    Honouring this matters: a rate-limited provider that says "try again in 42s" will keep
+    refusing a request retried half a second later, and the customer gets a fallback for a
+    problem that would have cleared itself.
+    """
+    response = getattr(exc, "response", None)
+    headers = getattr(response, "headers", None)
+    if headers is not None:
+        for header in ("retry-after", "x-ratelimit-reset-tokens", "x-ratelimit-reset-requests"):
+            delay = parse_duration(headers.get(header))
+            if delay:
+                return delay
+    found = re.search(r"try again in ([\d.]+(?:ms|s))", str(exc))
+    return parse_duration(found.group(1)) if found else None
 
 
 @dataclass(frozen=True)
@@ -55,6 +89,12 @@ class LLMClient:
     #: response, not just the connection. Lesson from a production bot.
     RETRIES = 1
 
+    #: Rate limits clear on their own, so they get their own, more patient budget.
+    RATE_LIMIT_RETRIES = 3
+
+    #: Never sit on a customer's message for longer than this waiting for a quota to reset.
+    MAX_RATE_LIMIT_WAIT_S = 75.0
+
     def __init__(self, settings: Settings | None = None, client: Any | None = None) -> None:
         self.settings = settings or get_settings()
         self._client = client
@@ -78,15 +118,30 @@ class LLMClient:
         tools: list[dict[str, Any]] | None = None,
     ) -> LLMResponse:
         last_error: Exception | None = None
-        for attempt in range(self.RETRIES + 1):
+        attempts = 0
+        plain_retries_left = self.RETRIES
+        rate_limit_retries_left = self.RATE_LIMIT_RETRIES
+
+        while True:
+            attempts += 1
             try:
                 return self._complete_once(messages, tools)
             except Exception as exc:  # noqa: BLE001 - every provider error is handled alike
                 last_error = exc
-                if attempt < self.RETRIES:
-                    time.sleep(0.5)
+                wait = retry_after(exc)
+                if wait is not None and wait <= self.MAX_RATE_LIMIT_WAIT_S:
+                    if rate_limit_retries_left <= 0:
+                        break
+                    rate_limit_retries_left -= 1
+                    time.sleep(wait + 0.5)  # half a second of slack for clock skew
+                    continue
+                if plain_retries_left <= 0:
+                    break
+                plain_retries_left -= 1
+                time.sleep(0.5)
+
         raise LLMError(
-            f"{self.settings.llm_model} failed after {self.RETRIES + 1} attempts: {last_error}"
+            f"{self.settings.llm_model} failed after {attempts} attempts: {last_error}"
         ) from last_error
 
     def _complete_once(

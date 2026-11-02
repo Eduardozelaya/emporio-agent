@@ -49,6 +49,9 @@ class Reply:
     max_steps_reached: bool = False
     latency_s: float = 0.0
     model: str = ""
+    #: Why the fallback fired, for the operator. Never shown to the customer: a provider
+    #: saying "no credits remaining" is our problem, not theirs.
+    error: str | None = None
 
     @property
     def tool_names(self) -> list[str]:
@@ -85,7 +88,7 @@ def run_turn(
     for _ in range(settings.max_tool_steps):
         try:
             response = llm.complete(conversation, schemas)
-        except LLMError:
+        except LLMError as exc:
             return _finish(
                 Reply(
                     text=prompts.fallback_reply(moment),
@@ -94,6 +97,7 @@ def run_turn(
                     messages=turn_messages,
                     fallback=True,
                     model=model,
+                    error=str(exc),
                 ),
                 settings,
                 session_id,
@@ -152,6 +156,7 @@ def run_turn(
             fallback=True,
             max_steps_reached=True,
             model=model,
+            error=f"stopped after {settings.max_tool_steps} tool steps without an answer",
         ),
         settings,
         session_id,
@@ -196,6 +201,7 @@ def log_turn(reply: Reply, session_id: str) -> None:
         "latency_s": reply.latency_s,
         "fallback": reply.fallback,
         "max_steps": reply.max_steps_reached,
+        "error": reply.error,
     }
     path = log_path()
     path.parent.mkdir(parents=True, exist_ok=True)

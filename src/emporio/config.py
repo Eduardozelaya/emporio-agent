@@ -49,7 +49,7 @@ def _env_float(name: str, default: float) -> float:
 class Settings:
     """Everything configurable from the environment (01_ARCHITECTURE section 8)."""
 
-    openai_api_key: str | None
+    llm_api_key: str | None
     llm_base_url: str | None
     llm_model: str
     llm_temperature: float
@@ -81,12 +81,12 @@ class Settings:
 
     def require_api_key(self) -> str:
         """Return the API key or fail with an actionable message (used only by llm.py)."""
-        if not self.openai_api_key:
+        if not self.llm_api_key:
             raise RuntimeError(
-                "OPENAI_API_KEY is not set. Copy .env.example to .env and fill it in, "
-                "or export the variable before running this command."
+                "No API key. Copy .env.example to .env and set LLM_API_KEY "
+                "(OPENAI_API_KEY also works), or export it before running this command."
             )
-        return self.openai_api_key
+        return self.llm_api_key
 
 
 def load_settings() -> Settings:
@@ -95,7 +95,9 @@ def load_settings() -> Settings:
     if not data_dir.is_absolute():
         data_dir = PROJECT_ROOT / data_dir
     return Settings(
-        openai_api_key=os.getenv("OPENAI_API_KEY") or None,
+        # The client speaks the OpenAI protocol to whatever LLM_BASE_URL points at, so the
+        # credential is named after the role, not the vendor. OPENAI_API_KEY still works.
+        llm_api_key=os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY") or None,
         llm_base_url=os.getenv("LLM_BASE_URL") or None,
         llm_model=_env_str("LLM_MODEL", "gpt-4o-mini"),
         llm_temperature=_env_float("LLM_TEMPERATURE", 0.2),

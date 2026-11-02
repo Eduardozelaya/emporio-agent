@@ -1,4 +1,4 @@
-"""E3 acceptance criteria.
+﻿"""E3 acceptance criteria.
 
 The privacy tests are the important ones: they are what stops the agent from becoming a way
 to read other people's orders.
@@ -26,7 +26,7 @@ def settings(tmp_path_factory: pytest.TempPathFactory) -> Settings:
     root = tmp_path_factory.mktemp("tools")
     shutil.copytree(REAL_RAW, root / "data" / "raw")
     built = Settings(
-        openai_api_key=None,
+        llm_api_key=None,
         llm_base_url=None,
         llm_model="test",
         llm_temperature=0.0,
@@ -476,7 +476,7 @@ def test_store_database_is_opened_read_only(settings) -> None:
 
 def test_missing_database_tells_you_how_to_build_it(tmp_path) -> None:
     broken = Settings(
-        openai_api_key=None,
+        llm_api_key=None,
         llm_base_url=None,
         llm_model="test",
         llm_temperature=0.0,

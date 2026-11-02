@@ -13,6 +13,7 @@ from emporio import config
 def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """Start every test from an environment with none of our variables set."""
     for name in (
+        "LLM_API_KEY",
         "OPENAI_API_KEY",
         "LLM_BASE_URL",
         "LLM_MODEL",
@@ -37,15 +38,29 @@ def test_defaults_match_architecture_section_8() -> None:
 
 
 def test_loads_without_api_key() -> None:
-    """E0 AC4: importing/loading config must not require OPENAI_API_KEY."""
+    """E0 AC4: importing/loading config must not require a key."""
     settings = config.load_settings()
-    assert settings.openai_api_key is None
+    assert settings.llm_api_key is None
 
 
 def test_require_api_key_explains_how_to_fix() -> None:
     settings = config.load_settings()
-    with pytest.raises(RuntimeError, match="OPENAI_API_KEY"):
+    with pytest.raises(RuntimeError, match="LLM_API_KEY"):
         settings.require_api_key()
+
+
+def test_llm_api_key_is_preferred_over_the_openai_name(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The client speaks the OpenAI protocol to any provider, so the key is role-named."""
+    monkeypatch.setenv("OPENAI_API_KEY", "legacy")
+    monkeypatch.setenv("LLM_API_KEY", "current")
+    assert config.load_settings().llm_api_key == "current"
+
+
+def test_openai_api_key_still_works(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "legacy")
+    assert config.load_settings().llm_api_key == "legacy"
 
 
 def test_empty_env_var_falls_back_to_default(monkeypatch: pytest.MonkeyPatch) -> None:
