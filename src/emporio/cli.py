@@ -103,7 +103,9 @@ def run(session_id: str | None = None, debug: bool = False) -> int:
 
     while True:
         try:
-            text = console.input("[bold green]você[/bold green] › ").strip()
+            # Strip the BOM and zero-width characters too: pasted text and piped input
+            # carry them, and they would turn "/exit" into an ordinary message.
+            text = console.input("[bold green]você[/bold green] › ").strip("﻿​ \t\r\n")
         except (EOFError, KeyboardInterrupt):
             console.print("\n[dim]Até mais![/dim]")
             return 0

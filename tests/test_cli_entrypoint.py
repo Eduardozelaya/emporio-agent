@@ -21,7 +21,23 @@ def test_no_command_prints_help_and_succeeds(capsys: pytest.CaptureFixture[str])
     assert "usage: emporio" in capsys.readouterr().out
 
 
-def test_unimplemented_command_fails_cleanly(capsys: pytest.CaptureFixture[str]) -> None:
-    """`eval` lands in E6. Never point this at an implemented command: it would really run."""
-    assert main(["eval"]) == 1
-    assert "not implemented yet" in capsys.readouterr().err
+def test_unknown_command_is_rejected() -> None:
+    """Every declared command is wired up now, so there is no placeholder left to test.
+
+    The earlier version of this test named a command that had not been built yet. Twice, the
+    epic that built it turned this into a test that really ran the thing — the second time it
+    fired all nineteen live evaluation scenarios. A test must never depend on a command
+    staying unimplemented.
+    """
+    with pytest.raises(SystemExit) as exc:
+        main(["teleport"])
+    assert exc.value.code == 2  # argparse's "invalid choice"
+
+
+def test_every_declared_command_is_wired_up() -> None:
+    """Guards the AssertionError branch in main(): declaring a command is not enough."""
+    parser = build_parser()
+    subparsers = next(
+        action for action in parser._actions if hasattr(action, "choices") and action.choices
+    )
+    assert set(subparsers.choices) == {"build-data", "chat", "tool", "eval", "sessions"}

@@ -1,13 +1,12 @@
 """Command line entry point: python -m emporio <command>.
 
-Subcommands are added by later epics (build-data in E1, tool in E3, chat in E5, eval in E6).
-Each one is imported lazily so that `--help` works before those modules exist.
+Each subcommand imports its module lazily, so `--help` and `--version` work even when the
+database has not been built or no API key is set.
 """
 
 from __future__ import annotations
 
 import argparse
-import sys
 from collections.abc import Sequence
 
 from emporio import __version__
@@ -35,7 +34,10 @@ def build_parser() -> argparse.ArgumentParser:
     tool.add_argument("name", help="Tool name, e.g. search_products")
     tool.add_argument("arguments", nargs="?", default="{}", help="JSON object with the arguments")
 
-    sub.add_parser("eval", help="Run the behavioural scenario evaluation (E6)")
+    evaluation = sub.add_parser("eval", help="Run the behavioural scenario evaluation")
+    evaluation.add_argument(
+        "--only", nargs="*", metavar="ID", help="Run only these scenarios, e.g. --only S01 S07"
+    )
 
     return parser
 
@@ -62,9 +64,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "sessions":
         return _list_sessions()
 
-    # Placeholder until the owning epic lands; keeps `--help` and CI working meanwhile.
-    print(f"'{args.command}' is not implemented yet.", file=sys.stderr)
-    return 1
+    if args.command == "eval":
+        from emporio.eval import main as run_eval
+
+        return run_eval(only=args.only)
+
+    raise AssertionError(f"command {args.command!r} is declared but not wired up")
 
 
 def _build_data() -> int:
