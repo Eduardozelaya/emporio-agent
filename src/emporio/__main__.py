@@ -23,8 +23,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("build-data", help="Build data/processed/emporio.db from data/raw (E1)")
 
-    chat = sub.add_parser("chat", help="Interactive chat with the agent (E5)")
+    chat = sub.add_parser("chat", help="Interactive chat with the agent")
     chat.add_argument("--session", help="Resume an existing session id")
+    chat.add_argument(
+        "--debug", action="store_true", help="Start with tool calls visible (toggle with /debug)"
+    )
+
+    sub.add_parser("sessions", help="List recent chat sessions")
 
     tool = sub.add_parser("tool", help="Call a tool directly, for debugging (E3)")
     tool.add_argument("name", help="Tool name, e.g. search_products")
@@ -49,6 +54,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "tool":
         return _call_tool(args.name, args.arguments)
 
+    if args.command == "chat":
+        from emporio.cli import run
+
+        return run(session_id=args.session, debug=args.debug)
+
+    if args.command == "sessions":
+        return _list_sessions()
+
     # Placeholder until the owning epic lands; keeps `--help` and CI working meanwhile.
     print(f"'{args.command}' is not implemented yet.", file=sys.stderr)
     return 1
@@ -68,6 +81,19 @@ def _build_data() -> int:
     # The curated policies.md is committed; this dump only exists so it can be diffed
     # against the PDF (DECISIONS D5).
     print(f"Refreshed the raw policy extraction -> {dump_raw_text()}")
+    return 0
+
+
+def _list_sessions() -> int:
+    from emporio.memory import list_sessions
+
+    rows = list_sessions()
+    if not rows:
+        print("No sessions yet. Start one with: python -m emporio chat")
+        return 0
+    print(f"{'session':<14} {'messages':>8}  last message")
+    for row in rows:
+        print(f"{row['session_id']:<14} {row['messages']:>8}  {row['last_at']}")
     return 0
 
 
