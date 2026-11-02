@@ -57,6 +57,10 @@ Also fixed: `db.py`/`llm.py` were missing from the repo layout in 01_ARCHITECTUR
 | 2026-11-01 | E3-T3 | First name search was a token `LIKE` plus `difflib` on the whole name | Failed two realistic queries: "takamini gd 20" (whole-string similarity is low because the product name is longer) and "violão Yamaha" (no product name contains "violão" — it is the category). Replaced with per-token scoring plus a pass that drops category words. |
 | 2026-11-01 | E3 | `get_order_status` description only said what the tool returns | A failing test exposed it. Tool descriptions are the only routing lever over the model, so each one now names the triggering situation and carries its guardrail; a test asserts both. |
 | 2026-11-01 | E3 | Left a no-op `_unused_imports_guard()` function in `tools.py` | Dead code written to silence an unused import instead of deleting the import. Removed both. |
+| 2026-11-02 | E4-T5 | Retry slept a flat 0.5 s on every provider error | The first live run fell back on all seven questions. The provider was saying "try again in 42s" and we retried immediately. Now the hint is parsed from the headers and honoured (D21). |
+| 2026-11-02 | E4-T5 | `LLMError` was swallowed with no trace | The fallback was right but hid "no credits remaining" — the one sentence that explained everything. `Reply.error` now reaches the operator and the turn log, never the customer. |
+| 2026-11-02 | E4-T5 | Prompt said "no máximo 5 por mensagem" | The model read it as a *query* limit and called `search_products(limit=5)`. Clarified that it governs what is written, not what is fetched. |
+| 2026-11-02 | E4-T5 | Prompt did not forbid re-asking for known information | "violões até R$1000" got answered with "qual o valor máximo?". Added the rule to extract filters from the message itself. |
 
 ### Session log
 | Date | Done | Commits | Notes |

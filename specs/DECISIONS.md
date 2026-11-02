@@ -44,13 +44,43 @@ noted. The README "Technical decisions" section summarises these; this file keep
 - **Consequence:** zero retrieval errors (no "wrong chunk"); cost grows with manual size.
   **When to switch to RAG:** manual > ~30 pages, many documents, or per-store manuals.
 
-### D3 — Model and provider: OpenAI `gpt-4o-mini` via OpenAI-compatible client
-- **Context:** need reliable tool calling, low latency, low cost; I already run this model in
-  production (StayBot) and know its behaviour.
-- **Options:** OpenAI · Anthropic · Gemini free tier · local (Ollama).
-- **Decision:** OpenAI SDK with `LLM_BASE_URL` + `LLM_MODEL` env vars; default `gpt-4o-mini`.
-- **Consequence:** any OpenAI-compatible provider (DeepSeek, Groq, Ollama) works by config only.
-  Evaluators need an OpenAI key (or a compatible endpoint) to chat; tests run without a key.
+### D3 — Model and provider: OpenAI-compatible client, provider chosen by config
+- **Context:** need reliable tool calling, low latency, low cost.
+- **Options:** OpenAI · Anthropic · Gemini free tier · Groq · local (Ollama).
+- **Decision:** the OpenAI SDK pointed at `LLM_BASE_URL` with `LLM_MODEL`. The credential is
+  `LLM_API_KEY` (`OPENAI_API_KEY` still accepted) because the client speaks the OpenAI
+  *protocol*, not necessarily to OpenAI.
+- **Consequence:** the provider is configuration, not code. Tests never need a key at all.
+
+**This decision earned its keep on day two.** The OpenAI account ran out of credits mid-build
+(HTTP 429, "no credits remaining"). Switching to **Groq** (`openai/gpt-oss-120b`) took three
+lines of `.env` and no code change. Verified working on the challenge's own reference
+questions.
+
+Trade-off of the free tier, measured rather than assumed:
+
+| | OpenAI `gpt-4o-mini` | Groq `openai/gpt-oss-120b` (free) |
+|---|---|---|
+| Tokens per minute | tens of thousands | **8,000** |
+| Our system prompt | ~6.6k tokens per call | ~6.6k tokens per call |
+| A turn with one tool call | ~3 s | **~100 s** (waits for the quota to reset) |
+
+With a 6.6k-token prompt, one call nearly exhausts a minute of free-tier budget, so a
+two-call turn has to wait. The agent is *correct* either way — the wait is handled by the
+retry logic in D21 — but iterating on prompts and running the full evaluation is far slower.
+Documented in the README as a known operational limitation.
+
+### D21 — Retry honours the provider's own retry hint
+- **Context:** the first live run fell back on every turn. The fallback behaved perfectly, but
+  the retry slept 0.5 s while the provider was explicitly saying "try again in 42s".
+- **Decision:** parse the delay from `retry-after` / `x-ratelimit-reset-*` headers (or the error
+  message) and wait that long, up to `MAX_RATE_LIMIT_WAIT_S` (75 s), with a separate and more
+  patient retry budget than for ordinary errors.
+- **Consequence:** a rate limit is no longer a failed turn, it is a slow one. Beyond the cap the
+  agent still falls back rather than leaving a customer waiting indefinitely.
+- **Also from that run:** `Reply.error` now carries the provider's reason to the operator and the
+  turn log, while the customer still sees only the neutral fallback. The first version swallowed
+  the one sentence that explained the outage.
 
 ### D4 — Clean data in SQLite, built by a loader
 - **Context:** small CSVs with quality issues; tools need filters and joins.
