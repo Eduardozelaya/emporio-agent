@@ -25,8 +25,8 @@ Open this first. Reading order for a new session (human or Claude Code):
 | E1 Data layer | [E1_DATA_LAYER](epics/E1_DATA_LAYER.md) | Sun | ✅ done |
 | E2 Domain rules | [E2_DOMAIN_RULES](epics/E2_DOMAIN_RULES.md) | Sun | ✅ done |
 | E3 Tools | [E3_TOOLS](epics/E3_TOOLS.md) | Sun/Mon | ✅ done |
-| E4 Agent core | [E4_AGENT_CORE](epics/E4_AGENT_CORE.md) | Mon | todo |
-| E5 Interface & memory | [E5_INTERFACE_MEMORY](epics/E5_INTERFACE_MEMORY.md) | Mon | todo |
+| E4 Agent core | [E4_AGENT_CORE](epics/E4_AGENT_CORE.md) | Mon | ✅ done |
+| E5 Interface & memory | [E5_INTERFACE_MEMORY](epics/E5_INTERFACE_MEMORY.md) | Mon | ✅ done |
 | E6 Evaluation & examples | [E6_EVALUATION_EXAMPLES](epics/E6_EVALUATION_EXAMPLES.md) | Tue | todo |
 | E7 Docs & delivery | [E7_DOCS_DELIVERY](epics/E7_DOCS_DELIVERY.md) | Tue | todo |
 

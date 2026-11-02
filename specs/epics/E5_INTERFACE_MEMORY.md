@@ -1,7 +1,7 @@
 ---
 type: epic
 epic: E5
-status: todo
+status: done
 created: 2026-11-01
 estimate: 1.5h
 depends_on: [E4]
@@ -41,7 +41,7 @@ decisions visible — the strongest way to show "it knows when to query data vs 
 |---|---|---|---|---|
 | E5-T1 | `memory.py` persistence + windowing | E3-T1 | `feat(memory): persistent sessions with safe history window` | AC5 tests incl. tool-group edge case |
 | E5-T2 | `cli.py` chat loop, commands, friendly errors | T1, E4 | `feat(cli): interactive chat with session and debug mode` | AC1–AC4, AC6 by hand |
-| E5-T3 | (stretch) Streamlit UI reusing `run_turn` | T2 | `feat(ui): optional streamlit chat` | Only if ahead of schedule |
+| E5-T3 | ~~(stretch) Streamlit UI reusing `run_turn`~~ | T2 | — | **Dropped.** The cut list in the plan puts this first, and the time is better spent on E6, which is a required deliverable. The CLI is the interface the challenge asks for, and `cli.py` holds no business logic, so a UI would only be another caller of `run_turn`. |
 
 ## Independent test
 Chat: "Quanto custa o Yamaha C40?" → "E em 6x?" → the second answer uses the C40 without asking again.

@@ -10,14 +10,21 @@ created: 2026-11-01
 > Newest entry on top. Update at the end of every work session (and before any break longer
 > than an hour). Claude Code must read this before starting.
 
-## ▶️ RESUME HERE — 2026-11-01 (E0–E3 done)
+## ▶️ RESUME HERE — 2026-11-02 (E0–E5 done)
 
-**State:** E0, E1, E2 and E3 complete, published at
-https://github.com/Eduardozelaya/emporio-agent. `ruff` + `pytest` green — **258 tests**, no
-API key needed. The six tools work end to end and can be driven by hand with
-`python -m emporio tool <name> '<json>'`.
-**Next:** E4 (prompt + LLM client + tool loop). This is the first epic that needs the API key.
+**State:** E0 through E5 complete, published at
+https://github.com/Eduardozelaya/emporio-agent. `ruff` + `pytest` green — **301 tests**, none
+of which need an API key. The agent answers live: `python -m emporio chat --debug`.
+**Provider:** Groq `openai/gpt-oss-120b` (the OpenAI account ran out of credits — see D3/D21).
+**Next:** E6 (behavioural evaluation + the five example conversations — a required
+deliverable), then E7 (README, PDF, tag).
 **Deadline:** Tue 2026-11-03 23:59 BRT (DECISIONS D0). Target: tag by Tue ~20:00.
+
+### Operational note for E6
+The free tier caps at **8,000 tokens per minute** and the system prompt is ~6.6k per call, so
+a turn with one tool call takes ~100 s instead of ~3 s. Correctness is unaffected (D21 waits
+out the limit), but a full evaluation run takes roughly an hour of wall time. Plan for one
+run, not five: get the scenarios right before spending the tokens.
 
 ### Open questions
 - [x] OpenAI key available (D3) — confirmed 2026-11-01.
@@ -70,3 +77,6 @@ Also fixed: `db.py`/`llm.py` were missing from the repo layout in 01_ARCHITECTUR
 | 2026-11-01 | E2 | `92e1862`, `2726e29` | `pricing.py` (promo, PIX, tiers, shipping) and `store_hours.py` (hours, national holidays, SLA). 107 tests green |
 | 2026-11-01 | E1 | see below | `data_loader.py` → `emporio.db` + `reports/data_quality.md` (19 findings); `policies.py` + curated `policies.md`. 198 tests green |
 | 2026-11-01 | E3 | see below | `db.py` (read-only store / writable app) and `tools.py` with the six tools, schema export, safe dispatcher and the `tool` debug command. 258 tests green |
+| 2026-11-01 | E4 | `572f6d1` | `llm.py`, `prompts.py`, `agent.py`, scripted fake model. 283 tests green |
+| 2026-11-02 | E4-T5 | `c331a35`, `a75940b` | First live run: all seven questions fell back. Fixed the retry (D21) and the error reporting, moved to Groq, fixed two prompt bugs. Reference questions verified live |
+| 2026-11-02 | E5 | see below | `memory.py` (sessions + safe window) and `cli.py` (`/debug`, `/new`, `--session`). 301 tests green. Follow-up verified live: "E em 6x?" reuses the product from history |

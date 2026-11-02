@@ -1,7 +1,7 @@
 ---
 type: epic
 epic: E4
-status: todo
+status: done
 created: 2026-11-01
 estimate: 3h
 depends_on: [E3]
