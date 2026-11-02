@@ -54,11 +54,27 @@ Be specific and honest — the challenge says it can count positively.
 | E7-T5 | Tag `v1.0-submission`, push, submit Google Form, reply to the e-mail | T4 | `git tag v1.0-submission` | Confirmation received |
 
 ## Final checklist
-- [ ] Repo public, default branch up to date, tag pushed
-- [ ] `examples/` has 5 files; README links them
-- [ ] `eval/results.md` committed
-- [ ] `reports/data_quality.md` committed
-- [ ] `.env.example` complete; no `.env` in history
-- [ ] PDF uploaded via Google Forms (logged in with a Gmail account)
-- [ ] E-mail reply to Tatielle with the repo link
+
+Verified on 2026-11-02 against a **fresh clone of the public repository**, not the working
+copy — the clone is what an evaluator actually gets.
+
+- [x] Repo public, default branch up to date
+- [x] Fresh clone installs in 88 s and `pytest` passes **339 tests with no API key**
+- [x] `ruff check .` clean
+- [x] `python -m emporio build-data` runs from the clone and regenerates
+      `reports/data_quality.md` **byte-identical to the committed one** — the loader is
+      reproducible across machines
+- [x] `python -m emporio tool <name>` works
+- [x] `python -m emporio chat` without a key prints the fix, not a stack trace
+- [x] No `.env` in the clone; **no key in any of the 25 commits** (scanned `git log -p --all`
+      for `sk-`, `sk-proj-`, `gsk_` and assigned key variables)
+- [x] Generated artefacts absent from the clone: `emporio.db`, `app.db`, `logs/`,
+      `policies_raw.txt`
+- [x] `examples/` has 5 files, all linked from the README and all resolving
+- [x] `eval/results.md` and `reports/data_quality.md` committed
+- [x] README has every section the challenge asks for, and no TODO left
+- [ ] Tag `v1.0-submission` pushed — **deliberately last**, it is the freeze
+- [ ] PDF via Google Forms *(only if the recruiter's e-mail actually asks for one; the
+      challenge PDF asks only for a reply with the repository link)*
+- [ ] E-mail reply with the repo link
 - [ ] No commits after the deadline

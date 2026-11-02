@@ -21,10 +21,12 @@ example conversations regenerated clean, with no fallback.
 **Deadline:** Tue 2026-11-03 23:59 BRT (DECISIONS D0).
 
 ### Still open for E7
+- [x] Fresh-clone run-through: installs in 88 s, 339 tests green with no key, lint clean,
+      `build-data` reproduces the committed report byte for byte, no secret in 25 commits.
 - [ ] Confirm with the recruiter whether a **PDF via Google Forms** is really required: the
       challenge PDF only asks to reply to the e-mail with the repository link.
-- [ ] Fresh-clone run-through on a clean folder.
-- [ ] `git tag v1.0-submission && git push --tags`.
+- [ ] `git tag v1.0-submission && git push --tags` — **the freeze**, so it goes last.
+- [ ] Reply to the recruiter's e-mail with the repository link.
 
 ### Open questions
 - [x] OpenAI key available (D3) — confirmed 2026-11-01.
