@@ -532,3 +532,68 @@ def test_missing_database_tells_you_how_to_build_it(tmp_path) -> None:
     result = dispatch("search_products", {}, settings=broken)
     assert result["error"] == "database_missing"
     assert "python -m emporio build-data" in result["message"]
+
+
+# ------------------------------------------------- brute-force confidence on the privacy rule
+
+
+def test_no_order_leaks_to_a_wrong_contact(settings) -> None:
+    """Every order, every plausible wrong contact: nothing comes back but the same error.
+
+    Spot-checking one order proves one order. This walks the whole table, because the cost
+    of a single hole here is someone else's address and purchase history.
+    """
+    import sqlite3
+
+    connection = sqlite3.connect(settings.db_path)
+    order_ids = [row[0] for row in connection.execute("SELECT order_id FROM orders")]
+    real_emails = [row[0] for row in connection.execute("SELECT email FROM customers")]
+    connection.close()
+
+    assert len(order_ids) == 20
+
+    wrong_contacts = [
+        "fulano@exemplo.com",
+        "",
+        " ",
+        "67",
+        "999999999999",
+        "' OR 1=1 --",
+        "%",
+        "_",
+        "anacarol.ferreira@coldmail.com.br",  # near miss on a real address
+        "ANACAROL.FERREIRA@COLDMAIL.COM.BR",
+    ]
+
+    for order_id in order_ids:
+        for contact in wrong_contacts:
+            result = call(
+                "get_order_status", {"order_id": order_id, "email_or_phone": contact}, settings
+            )
+            assert result == {
+                "error": "verification_failed",
+                "message": result.get("message", ""),
+            }, f"order {order_id} answered to {contact!r}"
+
+    # A real e-mail that belongs to someone else must not work either: exactly one address
+    # in the whole customer base opens each order, and it is that order's owner. Customers 11
+    # and 43 are the same person with two records and one e-mail, so counting rows rather than
+    # distinct addresses gives 21 for 20 orders.
+    for order_id in order_ids:
+        keys = [
+            email
+            for email in sorted(set(real_emails))
+            if "order"
+            in call("get_order_status", {"order_id": order_id, "email_or_phone": email}, settings)
+        ]
+        assert len(keys) == 1, f"order {order_id} opens for {len(keys)} addresses: {keys}"
+
+
+def test_wildcards_cannot_widen_a_search_into_an_order(settings) -> None:
+    """SQL wildcards reach the catalogue through LIKE; they must not reach orders."""
+    for payload in ["%", "_", "%@%", "'; DROP TABLE orders; --"]:
+        result = call("get_order_status", {"order_id": 8, "email_or_phone": payload}, settings)
+        assert result["error"] == "verification_failed"
+
+    # The catalogue survived the injection attempt.
+    assert call("search_products", {"category": "Violões"}, settings)["total_found"] == 33
