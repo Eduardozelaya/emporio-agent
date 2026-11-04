@@ -28,7 +28,7 @@ Open this first. Reading order for a new session (human or Claude Code):
 | E4 Agent core | [E4_AGENT_CORE](epics/E4_AGENT_CORE.md) | Mon | ✅ done |
 | E5 Interface & memory | [E5_INTERFACE_MEMORY](epics/E5_INTERFACE_MEMORY.md) | Mon | ✅ done |
 | E6 Evaluation & examples | [E6_EVALUATION_EXAMPLES](epics/E6_EVALUATION_EXAMPLES.md) | Tue | ✅ done |
-| E7 Docs & delivery | [E7_DOCS_DELIVERY](epics/E7_DOCS_DELIVERY.md) | Tue | todo |
+| E7 Docs & delivery | [E7_DOCS_DELIVERY](epics/E7_DOCS_DELIVERY.md) | Tue | ✅ done |
 
 E1 and E2 are independent (both only need E0) and can be done in either order.
 

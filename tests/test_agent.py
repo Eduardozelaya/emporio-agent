@@ -143,8 +143,12 @@ def test_failure_after_a_successful_tool_keeps_what_it_learned(settings) -> None
     assert reply.tool_names == ["get_product"]
 
 
-def test_llm_client_retries_once_then_raises(monkeypatch) -> None:
-    """A provider can send headers and then stall, so the retry lives in the client."""
+def test_llm_client_retries_transient_errors_then_raises(monkeypatch) -> None:
+    """A provider can send headers and then stall, so the retry lives in the client.
+
+    Four attempts, not two: a long run hit a patch of connection errors from the
+    provider, and half a second was not a serious attempt at a transient fault.
+    """
     from emporio.llm import LLMClient
 
     class StallingCompletions:
@@ -161,9 +165,9 @@ def test_llm_client_retries_once_then_raises(monkeypatch) -> None:
     monkeypatch.setattr("time.sleep", lambda _: None)  # no real backoff in tests
     client = LLMClient(client=sdk)
 
-    with pytest.raises(LLMError, match="failed after 2 attempts"):
+    with pytest.raises(LLMError, match="failed after 4 attempts"):
         client.complete([{"role": "user", "content": "oi"}])
-    assert completions.attempts == 2  # the first try plus one retry
+    assert completions.attempts == 1 + LLMClient.RETRIES
 
 
 # ------------------------------------------------------------------ AC4: tool errors flow
@@ -391,3 +395,29 @@ def test_token_usage_accumulates_over_the_steps(settings) -> None:
     assert reply.usage.prompt_tokens == 2200
     assert reply.usage.completion_tokens == 80
     assert reply.usage.total == 2280
+
+
+def test_transient_errors_back_off_instead_of_hammering(monkeypatch) -> None:
+    """Half a second between attempts is not a serious try at a network fault."""
+    from emporio.llm import LLMClient
+
+    slept: list[float] = []
+    monkeypatch.setattr("time.sleep", slept.append)
+
+    class Flaky:
+        def __init__(self) -> None:
+            self.attempts = 0
+
+        def create(self, **kwargs):  # noqa: ANN003, ARG002
+            self.attempts += 1
+            raise ConnectionError("Connection error.")
+
+    flaky = Flaky()
+    sdk = type("SDK", (), {"chat": type("Chat", (), {"completions": flaky})()})()
+
+    with pytest.raises(LLMError):
+        LLMClient(client=sdk).complete([{"role": "user", "content": "oi"}])
+
+    assert flaky.attempts == 1 + LLMClient.RETRIES
+    # Doubling, not a flat wait: 1s, 2s, 4s.
+    assert slept == [1.0, 2.0, 4.0]

@@ -99,7 +99,11 @@ ESCALATION = """\
 - Cliente pedindo para falar com uma pessoa → `customer_request`.
 
 Ao encaminhar: demonstre empatia primeiro, diga o que você já verificou, e informe ao cliente o
-número do chamado e o prazo de retorno que a ferramenta devolveu. Não prometa prazo diferente.\
+número do chamado e o prazo de retorno que a ferramenta devolveu. Não prometa prazo diferente.
+
+Se o caso tem uma regra no manual (prazo de troca, de devolução, de garantia), **enuncie a
+regra antes de falar do chamado**. Encaminhar sem explicar deixa o cliente sem a informação
+que ele veio buscar.\
 """
 
 ANSWER_STYLE = """\

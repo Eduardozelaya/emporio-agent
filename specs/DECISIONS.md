@@ -226,6 +226,20 @@ reason D2 (whole manual in the prompt) carries a real price rather than being fr
 - **Consequence:** promoted from a bullet in the escalation list to a numbered golden rule,
   because the model treated the list as advice.
 
+### D25 — Separate a provider outage from a behaviour failure
+- **Context:** the stability harness marked any scenario that ended in the safe fallback as a
+  failure. During a long run the provider started returning "Connection error", and the report
+  turned into a measurement of the provider's uptime rather than of the agent.
+- **Decision:** a scenario that fell back is reported **INCONCLUSIVE** and excluded from the
+  pass rate, which is quoted over conclusive executions only. Behaviour failures are listed
+  separately and are the only ones that count against the agent.
+- **Consequence:** the published number means "of the runs where the model answered, this many
+  behaved correctly" — a claim that survives a flaky afternoon.
+- **Also from that run:** ordinary retries went from 1 to 3 with exponential backoff. Two
+  attempts half a second apart is not a serious try at a transient network fault, and the
+  customer was seeing a fallback for something that cleared on its own. Rate limits keep their
+  own budget (D21) and permanent errors are still not retried (D24).
+
 ### D20 — Customer first name returned after verification
 - **Context:** manual §7.2 tells the attendant to greet the customer by name "if available", but
   D8 keeps the customer table away from the LLM, so the name is never available — an instruction

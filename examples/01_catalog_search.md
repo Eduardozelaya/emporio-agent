@@ -8,15 +8,15 @@
 
 **Cliente:** Oi! Quais opções de violões disponíveis custando até R$1000?
 
-**Loja:** Opa! Temos 12 violões até R$ 1.000 disponíveis. Aqui vão alguns pra você ter uma ideia:
+**Loja:** Opa! Temos 12 violões até R$ 1.000 aqui. Uma seleção pra você começar:
 
 - **Tagima Memphis AC-39 Nylon Natural** — R$ 429,90
-- **Rozini RC-104 Nylon Estudante** — R$ 459,90
-- **Shelby SN-100 Folk Aço Preto** — R$ 549,00
 - **Yamaha C40 Nylon Natural** — R$ 599,90
 - **Yamaha F310 Aço Natural** — R$ 699,90
+- **Shelby SGD-195E Elétrico Aço Sunburst** — R$ 799,00
+- **Tagima TW-7 7 Cordas Aço Natural** — R$ 999,00
 
-Esses primeiros são nylon (clássico) e os dois últimos de aço (folk). Quer que eu cite os outros modelos ou te ajude a escolher entre nylon e aço?
+Tem mais 7 modelos nessa faixa (Giannini, Rozini, Tagima Woodstock...). Quer que eu cite os outros, ou prefere que eu detalhe algum desses? Se me disser se procura nylon ou aço, eu afino a lista. 🎸
 
 <details><summary>ferramentas consultadas neste turno</summary>
 
@@ -29,25 +29,29 @@ search_products({"category": "Violões", "max_price": 1000})
 
 **Cliente:** Qual desses é melhor para quem está começando?
 
-**Loja:** Pra começar, violão de **nylon** costuma ser a melhor pedida — as cordas são mais macias e machucam menos os dedos, então o aprendizado rende mais. Entre os que citei:
+**Loja:** Pra começar, a regra de ouro é: **nylon dói menos nos dedos** — então eu iria de violão clássico. Duas opções boas:
 
-- **Yamaha C40 Nylon Natural (R$ 599,90)** — é a minha recomendação principal: tampo em Spruce, escala 650mm e a própria descrição diz que é ideal pra estudantes e iniciantes. Marca consolidada e som com boa projeção.
-- **Tagima Memphis AC-39 Nylon Natural (R$ 429,90)** — a opção mais em conta, corpo leve e confortável pra estudar bastante.
-- **Rozini RC-104 Nylon Estudante (R$ 459,90)** — violão de estudo, madeiras nacionais e acabamento caprichado.
+**Yamaha C40 Nylon Natural — R$ 599,90**
+Tampo em Spruce, escala 650mm. É o clássico "primeiro violão" de escola de música, som com boa projeção e ótimo acabamento pelo preço. Se couber no orçamento, é o que eu levaria.
 
-Se o orçamento permitir, eu iria de Yamaha C40. Se quiser gastar menos agora, a Tagima AC-39 resolve bem o começo.
+**Tagima Memphis AC-39 Nylon Natural — R$ 429,90**
+Corpo leve e confortável, nylon. Se a ideia é gastar pouco pra testar se vai mesmo pegar o hábito, é uma porta de entrada honesta.
 
-Quer que eu faça a cotação de algum deles no PIX ou parcelado?
+Agora, se o seu sonho é tocar **MPB, pop ou rock com palhetada**, aí o aço faz mais sentido — e o **Yamaha F310 (R$ 699,90)** é o equivalente dele nessa faixa, bem robusto. Só avisa: no começo os dedos reclamam um pouco mais.
+
+Que tipo de música você quer tocar? Com isso eu te digo qual dos dois caminhos vale mais a pena.
 
 <details><summary>ferramentas consultadas neste turno</summary>
 
 ```json
 get_product({"product_id": 81})
   -> {"product": {"product_id": 81, "name": "Yamaha C40 Nylon Natural", "category": "Violões", "price": 599.9, "promo": null, "availability": "available", "stock": 12, "description": "Violão clássico com tampo em Spruce e fundo/laterais em Meranti. Ideal para estudantes e iniciantes, com excelente projeção sonora.", "specs": {"back_sides": "Meranti", "color": "Natural", "electronics": "no", "neck": "Nato", "scale": "650mm", "strings": "nylon", "top": "Spruce"}, "strings": "nylon", "electric": false}}
-get_product({"product_id": 85})
-  -> {"product": {"product_id": 85, "name": "Rozini RC-104 Nylon Estudante", "category": "Violões", "price": 459.9, "promo": null, "availability": "available", "stock": 10, "description": "Violão clássico de estudo da Rozini, feito com madeiras nacionais. Acabamento caprichado e preço acessível para iniciantes.", "specs": {"back_sides": "Sapele", "color": "Natural", "electronics": "no", "neck": "Nato", "scale": "650mm", "strings": "nylon", "top": "Spruce"}, "strings": "nylon", "electric": false}}
 get_product({"product_id": 83})
   -> {"product": {"product_id": 83, "name": "Tagima Memphis AC-39 Nylon Natural", "category": "Violões", "price": 429.9, "promo": null, "availability": "available", "stock": 15, "description": "Violão clássico com cordas de nylon, perfeito para quem está começando. Corpo leve e confortável para longas sessões de estudo.", "specs": {"back_sides": "Linden", "color": "Natural", "electronics": "no", "neck": "Nato", "scale": "650mm", "strings": "nylon", "top": "Linden"}, "strings": "nylon", "electric": false}}
+get_product({"product_id": 85})
+  -> {"product": {"product_id": 85, "name": "Rozini RC-104 Nylon Estudante", "category": "Violões", "price": 459.9, "promo": null, "availability": "available", "stock": 10, "description": "Violão clássico de estudo da Rozini, feito com madeiras nacionais. Acabamento caprichado e preço acessível para iniciantes.", "specs": {"back_sides": "Sapele", "color": "Natural", "electronics": "no", "neck": "Nato", "scale": "650mm", "strings": "nylon", "top": "Spruce"}, "strings": "nylon", "electric": false}}
+get_product({"product_id": 87})
+  -> {"product": {"product_id": 87, "name": "Yamaha F310 Aço Natural", "category": "Violões", "price": 699.9, "promo": null, "availability": "available", "stock": 14, "description": "Violão folk aço Yamaha com corpo robusto e timbre encorpado. Um dos modelos mais vendidos do mundo para iniciantes e intermediários.", "specs": {"back_sides": "Meranti", "color": "Natural", "electronics": "no", "neck": "Nato", "scale": "634mm", "strings": "steel", "top": "Spruce"}, "strings": "steel", "electric": false}}
 ```
 
 </details>

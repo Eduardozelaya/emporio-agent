@@ -10,24 +10,33 @@ created: 2026-11-01
 > Newest entry on top. Update at the end of every work session (and before any break longer
 > than an hour). Claude Code must read this before starting.
 
-## ▶️ RESUME HERE — 2026-11-02 (E0–E6 done)
+## ▶️ RESUME HERE — 2026-11-04 (ready to submit)
 
-**State:** E0 through E6 complete, published at
-https://github.com/Eduardozelaya/emporio-agent. `ruff` + `pytest` green — **348 tests**, none
-of which need an API key. Live evaluation: **27/27 scenarios, 100/100 checks**, and **27/27
-stable across three consecutive runs** (81 executions). All five example conversations
-regenerated clean, with no fallback.
-**Provider:** DeepSeek `deepseek-flash` (third provider of the build — see D3).
-**Next:** E7 only — README final pass, secret scan, fresh-clone check, tag `v1.0-submission`.
-**Deadline:** Tue 2026-11-03 23:59 BRT (DECISIONS D0).
+**State:** every epic complete and verified. `ruff` clean, **358 tests** green with no API key.
+Live evaluation **31/31 scenarios, 117/117 checks**, and **93/93 conclusive executions across
+three consecutive runs** with nothing discarded for provider trouble. Five example
+conversations regenerated from the shipped code, no fallback in any of them.
+**Provider:** DeepSeek `deepseek-flash`.
 
-### Still open for E7
-- [x] Fresh-clone run-through: installs in 88 s, 339 tests green with no key, lint clean,
-      `build-data` reproduces the committed report byte for byte, no secret in 25 commits.
-- [ ] Confirm with the recruiter whether a **PDF via Google Forms** is really required: the
-      challenge PDF only asks to reply to the e-mail with the repository link.
-- [ ] `git tag v1.0-submission && git push --tags` — **the freeze**, so it goes last.
-- [ ] Reply to the recruiter's e-mail with the repository link.
+**Deadline confirmed from the recruiter's e-mail:** "end of the second business day from
+October 31, 2026". Received Saturday 31/10; Monday 02/11 is Finados, so the business days are
+Tuesday 03/11 and **Wednesday 04/11 23:59**. The holiday calendar built for the agent (D18)
+is what resolved it.
+
+**Submission requirements from that e-mail** (not in the challenge PDF):
+- PDF via Google Forms, logged into a Gmail account
+- everything in English
+- file named `Eduardo Zelaya - AI Engineer – Full-Stack para Aplicações com IA Generativa.pdf`
+- plus a reply to the e-mail thread with the repository link
+
+Draft PDF and e-mail live outside the repository, in `../submission/`.
+
+### Remaining
+- [ ] `git push`
+- [ ] `git tag v1.0-submission && git push --tags` — the freeze
+- [ ] Export the PDF and submit the Google Form
+- [ ] Reply to the e-mail thread
+- [ ] No commits after the tag
 
 ### Open questions
 - [x] OpenAI key available (D3) — confirmed 2026-11-01.
@@ -80,6 +89,10 @@ Also fixed: `db.py`/`llm.py` were missing from the repo layout in 01_ARCHITECTUR
 | 2026-11-04 | E6 | `must_contain: "grátis"` measured vocabulary | Failed a run that said "sem custo de frete". Added `must_contain_any`. |
 | 2026-11-04 | E6 | Nothing stopped the agent inventing an example order number | "ex.: pedido 1234" could be read by a customer as theirs. Now golden rule 9. |
 | 2026-11-04 | E6 | My brute-force privacy test expected 20 keys and got 21 | Counting rows instead of distinct addresses: customers 11 and 43 are one person with one e-mail. The tool was right; the assertion was not. |
+| 2026-11-04 | hardening | Stability harness counted a provider outage as a behaviour failure | During a flaky patch the report became a measure of DeepSeek's uptime rather than of the agent. Fallbacks are now INCONCLUSIVE and excluded from the rate (D25). |
+| 2026-11-04 | hardening | Transient "Connection error" gave up after 2 attempts, 0.5 s apart | Not a serious try at a fault that clears itself. Three retries with exponential backoff now; rate limits and permanent errors keep their own rules. |
+| 2026-11-04 | hardening | `must_not_contain: "no pix fica"` on S23 | Failed a correct run: the agent refuses to quote the unreleased ukulele and then prices an available alternative in PIX. Only the exact forbidden number is asserted now. |
+| 2026-11-04 | hardening | Agent escalated an exchange request without stating the 7-day rule | Rare, but it leaves the customer without the answer they came for. The prompt now requires the rule before the ticket. |
 
 ### Session log
 | Date | Done | Commits | Notes |

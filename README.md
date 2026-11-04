@@ -15,8 +15,8 @@ arithmetic. Everything else here follows from that split.
   enumerated.
 - **Knows when to hand off** — complaints, refunds, inconsistent data — and says when the team
   will reply, computed from the store's opening hours.
-- **Behavioural evaluation** of 27 scenarios, run three times to prove it is stable rather than
-  lucky, plus 348 unit and loop tests that run with no API key at all.
+- **Behavioural evaluation** of 31 scenarios, run three times to prove it is stable rather than
+  lucky, plus 358 unit, property and loop tests that run with no API key at all.
 - Full **spec-driven documentation** in [`specs/`](specs/MAP.md).
 
 ## Example conversations
@@ -71,7 +71,7 @@ than a claim.
 ### Other commands
 
 ```bash
-pytest                                   # 348 tests, no API key needed
+pytest                                   # 358 tests, no API key needed
 ruff check .                             # lint
 python -m emporio eval                   # live behavioural evaluation -> eval/results.md
 python -m emporio eval --only S07 S13    # just these scenarios
@@ -244,9 +244,19 @@ public repository is fine.
 
 Three layers, because they catch different things:
 
-1. **348 unit and loop tests** — pure logic, the tools, and the whole agent loop driven by a
-   scripted fake model. No API key, no network, so CI runs them on every push.
-2. **27 live behavioural scenarios** (`python -m emporio eval`) — see below.
+1. **Unit, property and loop tests** — pure logic, the tools, and the whole agent loop driven
+   by a scripted fake model. No API key, no network, so CI runs them on every push. Beyond
+   the table tests, three sweeps cover what nobody thought to enumerate:
+   - every product in the catalogue against every payment method, delivery option and
+     instalment count — about 1,500 quotes — asserting that the breakdown adds up, that money
+     never has sub-centavo precision, that PIX never stacks on a promotion, that shipping is
+     one of exactly three outcomes, and that the stated maximum instalment plan is allowed
+     while one more is not;
+   - every order against ten wrong contacts and every distinct address in the customer base —
+     about 1,180 verification attempts — of which exactly twenty succeed, each for its owner;
+   - 300 randomly shaped conversations, each cut at every possible window size, asserting the
+     history we send can never contain an orphan `tool` message.
+2. **31 live behavioural scenarios** (`python -m emporio eval`) — see below.
 3. **Five example conversations**, generated from real runs.
 
 Scenarios assert on *behaviour*, not wording, because a model never writes the same sentence
@@ -260,18 +270,27 @@ Latest run, with the full report and every transcript in
 
 | | |
 |---|---|
-| **Scenarios passed** | **27 / 27** (100 / 100 individual checks) |
-| **Stability** | **27 / 27 across three consecutive runs** — 81 scenario executions |
+| **Scenarios passed** | **31 / 31** (117 / 117 individual checks) |
+| **Stability** | **93 / 93 conclusive executions** — the suite run three times, nothing discarded |
 | Model | `deepseek-flash` via `https://api.deepseek.com` |
-| Tokens | 559,093 in · 8,455 out |
-| Wall time | 116 s for the whole suite |
+| Tokens | 709,052 in · 11,124 out |
+| Wall time | 169 s for the whole suite |
 | Cost | fractions of a cent |
 
 **One green run proves the model got it right once.** A customer-facing agent has to get it
-right every time, and the only way to know is to ask more than once, so the suite is run three
-times and scored per scenario. The first time I did that, three scenarios that had just passed
-failed — the single green run had luck in it. Every instability since has been chased to a
-cause and fixed; the numbers above are the state after that.
+right every time, and the only way to know is to ask more than once, so the suite is run
+repeatedly and scored per scenario. The first time I did that, three scenarios that had just
+passed failed — the single green run had luck in it. Every instability since has been chased
+to a cause and fixed.
+
+The harness separates two things that look identical from the outside. A scenario that ended
+in the safe fallback because the provider dropped the connection is reported **inconclusive**
+and excluded from the rate; only behaviour failures count against the agent. Without that
+split the number measures the provider's uptime, which is not what anyone wants to know —
+and a flaky afternoon on the provider's side would quietly turn a good report into a bad one
+(D25). The same run that exposed this also showed the client giving up on transient
+connection errors after two attempts half a second apart, so ordinary retries now go three
+deep with exponential backoff.
 
 The input token count is dominated by the system prompt: ~7k tokens on every call, times
 roughly fifty calls. That number is the argument for the "trim the prompt" item under
@@ -414,7 +433,7 @@ src/emporio/
   memory.py          sessions and the window that never splits a tool group
   cli.py             interactive chat with /debug
   eval.py            behavioural scenario runner
-tests/               348 tests, none of which need an API key
+tests/               358 tests, none of which need an API key
 eval/                scenarios.yaml and results.md
 examples/            five conversations from real runs
 specs/               the full spec-driven documentation — start at specs/MAP.md

@@ -179,7 +179,7 @@ def test_must_not_contain_catches_a_leak() -> None:
 
 def test_scenarios_file_is_valid() -> None:
     defaults, scenarios = load_scenarios()
-    assert len(scenarios) == 27
+    assert len(scenarios) == 31
     assert defaults["today"] == "2026-11-01T12:20:00"
 
     known_tools = {

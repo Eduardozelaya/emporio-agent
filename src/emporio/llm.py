@@ -104,7 +104,14 @@ class LLMClient:
 
     #: A provider can send headers and then stall, so the timeout has to cover the whole
     #: response, not just the connection. Lesson from a production bot.
-    RETRIES = 1
+    #:
+    #: Raised from 1 after a long run hit a patch of "Connection error" from the provider:
+    #: two attempts half a second apart is not a serious try at a transient network fault,
+    #: and the customer saw a fallback for something that cleared on its own.
+    RETRIES = 3
+
+    #: Backoff between ordinary retries, doubling each time.
+    RETRY_BACKOFF_S = 1.0
 
     #: Rate limits clear on their own, so they get their own, more patient budget. Raised
     #: from 3 after a live run gave up with the provider asking for only 6.7 s more — on a
@@ -158,8 +165,9 @@ class LLMClient:
                     continue
                 if plain_retries_left <= 0:
                     break
+                attempt_index = self.RETRIES - plain_retries_left
                 plain_retries_left -= 1
-                time.sleep(0.5)
+                time.sleep(self.RETRY_BACKOFF_S * (2**attempt_index))
 
         hint = ""
         if last_error is not None and "too large" in str(last_error).lower():
