@@ -597,3 +597,21 @@ def test_wildcards_cannot_widen_a_search_into_an_order(settings) -> None:
 
     # The catalogue survived the injection attempt.
     assert call("search_products", {"category": "Violões"}, settings)["total_found"] == 33
+
+
+def test_quote_returns_the_value_of_the_maximum_plan_it_allows(settings) -> None:
+    """Refusing a plan without pricing the alternative makes the model do the arithmetic.
+
+    A stability run caught exactly that: told 6x was not allowed and that the maximum was 3,
+    the agent divided R$ 159,90 by three itself and wrote "3x de R$ 53,30". The number was
+    right and the rule was broken, which is the failure mode `numbers_grounded` exists for.
+    """
+    result = call(
+        "quote_price",
+        {"product_id": 119, "payment_method": "credit", "installments": 6},
+        settings,
+    )
+    assert result["installments"]["allowed"] is False
+    assert result["max_installments_allowed"] == 3
+    assert result["max_installment_value"] == 53.30
+    assert any("3x de R$ 53,30" in note for note in result["notes"])

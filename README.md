@@ -15,8 +15,8 @@ arithmetic. Everything else here follows from that split.
   enumerated.
 - **Knows when to hand off** — complaints, refunds, inconsistent data — and says when the team
   will reply, computed from the store's opening hours.
-- **Behavioural evaluation** of 19 scenarios, plus 332 unit and loop tests that run with no API
-  key at all.
+- **Behavioural evaluation** of 27 scenarios, run three times to prove it is stable rather than
+  lucky, plus 348 unit and loop tests that run with no API key at all.
 - Full **spec-driven documentation** in [`specs/`](specs/MAP.md).
 
 ## Example conversations
@@ -71,7 +71,7 @@ than a claim.
 ### Other commands
 
 ```bash
-pytest                                   # 332 tests, no API key needed
+pytest                                   # 348 tests, no API key needed
 ruff check .                             # lint
 python -m emporio eval                   # live behavioural evaluation -> eval/results.md
 python -m emporio eval --only S07 S13    # just these scenarios
@@ -244,9 +244,9 @@ public repository is fine.
 
 Three layers, because they catch different things:
 
-1. **332 unit and loop tests** — pure logic, the tools, and the whole agent loop driven by a
+1. **348 unit and loop tests** — pure logic, the tools, and the whole agent loop driven by a
    scripted fake model. No API key, no network, so CI runs them on every push.
-2. **19 live behavioural scenarios** (`python -m emporio eval`) — see below.
+2. **27 live behavioural scenarios** (`python -m emporio eval`) — see below.
 3. **Five example conversations**, generated from real runs.
 
 Scenarios assert on *behaviour*, not wording, because a model never writes the same sentence
@@ -260,15 +260,37 @@ Latest run, with the full report and every transcript in
 
 | | |
 |---|---|
-| **Scenarios passed** | **19 / 19** (71 / 71 individual checks) |
+| **Scenarios passed** | **27 / 27** (100 / 100 individual checks) |
+| **Stability** | **27 / 27 across three consecutive runs** — 81 scenario executions |
 | Model | `deepseek-flash` via `https://api.deepseek.com` |
-| Tokens | 407,866 in · 6,759 out |
-| Wall time | 112 s for the whole suite |
+| Tokens | 559,093 in · 8,455 out |
+| Wall time | 116 s for the whole suite |
 | Cost | fractions of a cent |
+
+**One green run proves the model got it right once.** A customer-facing agent has to get it
+right every time, and the only way to know is to ask more than once, so the suite is run three
+times and scored per scenario. The first time I did that, three scenarios that had just passed
+failed — the single green run had luck in it. Every instability since has been chased to a
+cause and fixed; the numbers above are the state after that.
 
 The input token count is dominated by the system prompt: ~7k tokens on every call, times
 roughly fifty calls. That number is the argument for the "trim the prompt" item under
 [what I would do with more time](#what-i-would-do-with-more-time).
+
+**The failures taught more than the passes, and one pattern ran through all of them: when the
+agent misbehaved, the hole was usually in a tool or in a check, not in the model.**
+
+| What the agent did | Where the hole actually was |
+|---|---|
+| Sent `limit=5` to a search, then recommended from five products out of thirty-three | The tool exposed a parameter it kept confusing with "show at most five" (D22) |
+| Wrote "o máximo é 3x de R$ 53,30" — arithmetic it is forbidden to do | `quote_price` refused the 6x plan and named the maximum **without pricing it**, so the model filled the gap by dividing 159.90 by 3. The tool now returns `max_installment_value` |
+| Asked "qual forma de pagamento?" before it could quote anything | `payment_method` was a required argument; the quote now returns every method at once |
+| Offered "ex.: pedido 1234" while asking for an order number | Nothing stopped it inventing an illustrative value, and a customer could read 1234 as theirs. Now a golden rule |
+
+The one genuine behaviour defect was a complaint: asked about a guitar that arrived with a
+cracked top, the agent was empathetic, asked for the order number, and opened **no ticket**.
+The rule was a bullet in a list and the model read it as advice, so it became a numbered
+golden rule (D23).
 
 **An earlier run scored 15/19, and the four failures were more useful than the fifteen
 passes.** One was the agent genuinely misbehaving: asked about a guitar that arrived with a
@@ -290,6 +312,13 @@ behaviour is as dangerous as one that passes broken behaviour:
 
 All three were rewritten to assert the intent rather than a fragile string, with the reason
 recorded in [`eval/scenarios.yaml`](eval/scenarios.yaml).
+
+Running the suite repeatedly surfaced two more of the same kind, plus a bug in the checker
+itself. `must_contain: "grátis"` failed a run that said "sem custo de frete" — the same fact,
+different words — so checks that allow several right answers now use `must_contain_any`. And
+the number parser read Brazilian thousands separators only, so when the model slipped into
+"R$ 323.10" it reported six correct prices as inventions; both decimal readings are kept now,
+since a genuinely invented price matches neither.
 
 ## Known limitations
 
@@ -385,7 +414,7 @@ src/emporio/
   memory.py          sessions and the window that never splits a tool group
   cli.py             interactive chat with /debug
   eval.py            behavioural scenario runner
-tests/               332 tests, none of which need an API key
+tests/               348 tests, none of which need an API key
 eval/                scenarios.yaml and results.md
 examples/            five conversations from real runs
 specs/               the full spec-driven documentation — start at specs/MAP.md

@@ -51,13 +51,16 @@ def numbers_in(text: str, brazilian: bool = False) -> set[float]:
             continue
         candidates = set()
         if "," in token:
+            # Unambiguous Brazilian: dots group thousands, the comma is the decimal point.
             candidates.add(token.replace(".", "").replace(",", "."))
-        elif brazilian and "." in token:
+        elif "." in token:
+            # Ambiguous: "2.199" is 2199 to a Brazilian and 2.199 to a parser, and a model
+            # writing Portuguese still slips into "R$ 323.10". Keep both readings — a price
+            # the agent invented matches neither, so nothing is lost by being generous.
+            candidates.add(token)
             candidates.add(token.replace(".", ""))
         else:
             candidates.add(token)
-            if "." in token:
-                candidates.add(token.replace(".", ""))
         for candidate in candidates:
             try:
                 found.add(float(candidate))
@@ -139,6 +142,20 @@ def evaluate(
     for needle in spec.get("must_contain") or []:
         ok = fold(needle) in folded
         checks.append(Check(f"says {needle!r}", ok, "" if ok else "not found in the reply"))
+
+    # For facts the agent can state in several equally correct ways. "Free shipping" is
+    # "grátis", "sem custo" or "não paga frete" depending on the turn, and a check pinned to
+    # one of them measures vocabulary rather than behaviour.
+    synonyms = spec.get("must_contain_any") or []
+    if synonyms:
+        hit = [n for n in synonyms if fold(n) in folded]
+        checks.append(
+            Check(
+                f"says one of {synonyms}",
+                bool(hit),
+                "" if hit else "none of them appear in the reply",
+            )
+        )
 
     for needle in spec.get("must_not_contain") or []:
         ok = fold(needle) not in folded

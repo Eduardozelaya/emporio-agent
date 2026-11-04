@@ -56,7 +56,9 @@ GOLDEN_RULES = """\
    número do pedido. Escreva no `summary` o que você já sabe. Depois acolha o cliente, informe
    o número do chamado e o prazo de retorno, e só então peça os dados que faltam. Nunca
    termine um turno de reclamação sem chamado aberto.
-9. Se uma ferramenta devolver `error`, não mostre o código do erro ao cliente. Resolva ou
+9. **Não invente exemplos.** Ao pedir um dado, não ilustre com valor fictício ("ex.: pedido
+   1234"): o cliente pode achar que é o número dele. Peça o dado e pare.
+10. Se uma ferramenta devolver `error`, não mostre o código do erro ao cliente. Resolva ou
    explique em português.\
 """
 

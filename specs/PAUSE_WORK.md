@@ -13,9 +13,10 @@ created: 2026-11-01
 ## ▶️ RESUME HERE — 2026-11-02 (E0–E6 done)
 
 **State:** E0 through E6 complete, published at
-https://github.com/Eduardozelaya/emporio-agent. `ruff` + `pytest` green — **339 tests**, none
-of which need an API key. Live evaluation: **19/19 scenarios, 71/71 checks**, 112 s. All five
-example conversations regenerated clean, with no fallback.
+https://github.com/Eduardozelaya/emporio-agent. `ruff` + `pytest` green — **348 tests**, none
+of which need an API key. Live evaluation: **27/27 scenarios, 100/100 checks**, and **27/27
+stable across three consecutive runs** (81 executions). All five example conversations
+regenerated clean, with no fallback.
 **Provider:** DeepSeek `deepseek-flash` (third provider of the build — see D3).
 **Next:** E7 only — README final pass, secret scan, fresh-clone check, tag `v1.0-submission`.
 **Deadline:** Tue 2026-11-03 23:59 BRT (DECISIONS D0).
@@ -74,6 +75,11 @@ Also fixed: `db.py`/`llm.py` were missing from the repo layout in 01_ARCHITECTUR
 | 2026-11-02 | E6 | `eval --only` overwrote `eval/results.md` | A four-scenario rerun replaced the committed full report. Partial runs now write elsewhere. The kind of thing nobody notices until the report *is* the deliverable. |
 | 2026-11-02 | E6 | Retried HTTP 413 six times | A request larger than the provider's ceiling is permanent, not rate-limited (D24). |
 | 2026-11-02 | E6 | Three scenario checks failed **correct** behaviour | `"a caminho"` cannot see the negation in "não consigo confirmar que está a caminho"; `"24"` demanded jargon over the concrete date the agent gave; `"R$ 35"` matched the start of "R$ 359,00". A check that fails good behaviour is as dangerous as one that passes bad behaviour — all three now assert the intent. |
+| 2026-11-04 | E6 | `quote_price` refused a plan and named the maximum without pricing it | A stability run caught the agent writing "3x de R$ 53,30" — correct arithmetic it is forbidden to do. The tool left the gap; it now returns `max_installment_value`. Same shape as the `limit` fix: when the model misbehaves, check the tool first. |
+| 2026-11-04 | E6 | The number parser read Brazilian thousands separators only | When the model wrote "R$ 323.10" it reported six correct prices as inventions. Both decimal readings are kept now. |
+| 2026-11-04 | E6 | `must_contain: "grátis"` measured vocabulary | Failed a run that said "sem custo de frete". Added `must_contain_any`. |
+| 2026-11-04 | E6 | Nothing stopped the agent inventing an example order number | "ex.: pedido 1234" could be read by a customer as theirs. Now golden rule 9. |
+| 2026-11-04 | E6 | My brute-force privacy test expected 20 keys and got 21 | Counting rows instead of distinct addresses: customers 11 and 43 are one person with one e-mail. The tool was right; the assertion was not. |
 
 ### Session log
 | Date | Done | Commits | Notes |
@@ -87,3 +93,4 @@ Also fixed: `db.py`/`llm.py` were missing from the repo layout in 01_ARCHITECTUR
 | 2026-11-02 | E4-T5 | `c331a35`, `a75940b` | First live run: all seven questions fell back. Fixed the retry (D21) and the error reporting, moved to Groq, fixed two prompt bugs. Reference questions verified live |
 | 2026-11-02 | E5 | see below | `memory.py` (sessions + safe window) and `cli.py` (`/debug`, `/new`, `--session`). 301 tests green. Follow-up verified live: "E em 6x?" reuses the product from history |
 | 2026-11-02 | E6 | `3a23373`, `c08453a`, `f266bf1` | 19 scenarios + runner + 31 tests of the checks themselves. Three live runs: 15/19 → 16/19 → **19/19**. Five examples regenerated clean on DeepSeek |
+| 2026-11-04 | E6 hardening | see below | 8 adversarial scenarios (S20–S27), brute-force privacy test (~1,180 attempts), and a stability harness. Repeated runs found one real defect and three fragile checks. Final: **27/27, stable over 3 runs** |

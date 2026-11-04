@@ -129,6 +129,10 @@ class Quote(BaseModel):
     grand_total: Decimal | None
     installments: InstallmentPlan | None
     max_installments_allowed: int
+    #: What each instalment costs at that maximum. Returned even when the customer asked for
+    #: a plan we refused: without it the model has the number of instalments but not their
+    #: value, and a live run showed it dividing the total itself to fill the gap.
+    max_installment_value: Decimal
     notes: list[str]
 
 
@@ -267,11 +271,15 @@ def quote(
     if payment_method == "credit":
         plan = check_installments(final_total, installments if installments is not None else 1)
         if not plan.allowed:
-            allowed_max = max_installments(final_total)
-            notes.append(f"O máximo para este valor é {allowed_max}x.")
+            best = max_installments(final_total)
+            notes.append(
+                f"O máximo para este valor é {best}x de "
+                f"{format_brl(installment_value(final_total, best))}."
+            )
     elif installments is not None and installments > 1:
         notes.append("Parcelamento só está disponível no cartão de crédito.")
 
+    allowed_max = max_installments(subtotal)
     ship = shipping_cost(subtotal, delivery)
     grand_total = None if ship.cost is None else round_brl(final_total + ship.cost)
 
@@ -304,6 +312,7 @@ def quote(
         grand_total=grand_total,
         installments=plan,
         # Always reported, so "em quantas vezes posso parcelar?" never needs a second call.
-        max_installments_allowed=max_installments(subtotal),
+        max_installments_allowed=allowed_max,
+        max_installment_value=installment_value(subtotal, allowed_max),
         notes=notes,
     )

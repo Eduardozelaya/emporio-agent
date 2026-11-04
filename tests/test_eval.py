@@ -179,7 +179,7 @@ def test_must_not_contain_catches_a_leak() -> None:
 
 def test_scenarios_file_is_valid() -> None:
     defaults, scenarios = load_scenarios()
-    assert len(scenarios) == 19
+    assert len(scenarios) == 27
     assert defaults["today"] == "2026-11-01T12:20:00"
 
     known_tools = {
@@ -251,3 +251,34 @@ def test_fallback_counts_as_a_failure() -> None:
     result = ScenarioResult(id="S01", title="t", messages=["oi"], replies=["..."])
     result.checks = [Check("no fallback", False, "the turn ended in the safe reply")]
     assert result.passed is False
+
+
+# --------------------------------------------- regressions from the stability runs
+
+
+@pytest.mark.parametrize(
+    ("reply", "corpus_json"),
+    [
+        ("R$ 323,10", '{"promo_price": 323.1}'),
+        ("R$ 323.10", '{"promo_price": 323.1}'),  # the model slipping into US format
+        ("R$ 2.199,00", '{"price": 2199.0}'),
+        ("R$ 2199", '{"price": 2199.0}'),
+        ("5.999,00", '{"price": 5999.0}'),
+    ],
+)
+def test_a_price_is_recognised_in_either_decimal_format(reply, corpus_json) -> None:
+    """A stability run reported six invented prices that were all real.
+
+    The agent had written "R$ 323.10" with a dot, and the parser read Brazilian thousands
+    separators only, turning it into 32,310. Both readings are kept now: a price the agent
+    actually invented matches neither.
+    """
+    assert numbers_in(reply, brazilian=True) & numbers_in(corpus_json)
+
+
+def test_must_contain_any_accepts_synonyms() -> None:
+    """Free shipping is "grátis" or "sem custo" depending on the turn; both are correct."""
+    spec = {"must_contain_any": ["gratis", "sem custo"], "numbers_grounded": False}
+    assert not failures(run_checks(spec, "O frete fica sem custo pra você."))
+    assert not failures(run_checks(spec, "Frete grátis!"))
+    assert failures(run_checks(spec, "O frete fica R$ 35,00."))

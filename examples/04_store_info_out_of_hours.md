@@ -8,27 +8,25 @@
 
 **Cliente:** Vocês estão abertos agora?
 
-**Loja:** Opa! Agora não — hoje é domingo e a loja está fechada. 😊
+**Loja:** Oi! Agora não — é domingo e a loja está fechada. A gente reabre terça-feira (03/11) às 09:00.
 
-A gente reabre na terça-feira (03/11) às 09:00. Mas eu continuo por aqui te atendendo normalmente: preços, modelos, dúvidas de política, tudo isso eu consigo ver agora. Quer que eu adiante alguma coisa?
+Mas eu sigo por aqui respondendo dúvidas sobre instrumentos, preços e pedidos. Quer ver alguma coisa?
 
 *(nenhuma ferramenta — respondido a partir do manual de políticas)*
 
 **Cliente:** Qual o endereço e quais formas de pagamento vocês aceitam?
 
-**Loja:** Claro!
+**Loja:** A loja fica na Rua 14 de Maio, 3200 — Centro, Campo Grande/MS, CEP 79202-333. Quando reabrir (terça, 09:00), pode passar por lá.
 
-**Endereço:** Rua 14 de Maio, 3200 — Centro, Campo Grande/MS, CEP 79202-333.
+Formas de pagamento:
+• PIX — 5% de desconto (não cumulativo com promoções)
+• Cartão de débito — à vista
+• Cartão de crédito — até 12x sem juros
+• Boleto — à vista, compensa em até 3 dias úteis
 
-**Pagamentos:**
-- PIX — à vista, com 5% de desconto sobre o preço de tabela
-- Cartão de débito — à vista
-- Cartão de crédito — até 12x sem juros
-- Boleto bancário — compensação em até 3 dias úteis
+Sobre o parcelamento: até 3x sem parcela mínima (salvo compras abaixo de R$ 50), de 4x a 6x a parcela mínima é R$ 80 e de 7x a 12x é R$ 100.
 
-Sobre o parcelamento: até 3x não tem valor mínimo de parcela; de 4x a 6x a parcela mínima é R$ 80,00; e de 7x a 12x, R$ 100,00.
-
-Só lembrando que o desconto do PIX não acumula com preço de promoção, tá? Se quiser, me diz um instrumento que eu já te passo o valor em cada forma de pagamento. 🎸
+Quer que eu veja o preço de algum instrumento?
 
 *(nenhuma ferramenta — respondido a partir do manual de políticas)*
 

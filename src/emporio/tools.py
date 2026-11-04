@@ -455,6 +455,7 @@ def quote_price(args: QuotePriceArgs, settings: Settings) -> dict[str, Any]:
             else None
         ),
         "max_installments_allowed": result.max_installments_allowed,
+        "max_installment_value": money(result.max_installment_value),
         "notes": result.notes,
     }
 

@@ -8,14 +8,9 @@
 
 **Cliente:** Quanto custa o Takamine?
 
-**Loja:** Temos quatro Takamine em estoque:
+**Loja:** Temos quatro Takamine aqui, todos violões: o GD20 Dreadnought (R$ 2.199,00), o GC1CE Elétrico Nylon (R$ 2.499,00), o GC5CE Elétrico Nylon (R$ 3.299,00) e o GN51CE Elétrico Aço (R$ 4.199,00).
 
-- GD20 Dreadnought Natural — R$ 2.199,00
-- GC1CE Elétrico Nylon Natural — R$ 2.499,00
-- GC5CE Elétrico Nylon Natural — R$ 3.299,00
-- GN51CE Elétrico Aço Natural — R$ 4.199,00
-
-Qual deles você quer que eu detalhe? Posso calcular o valor no PIX e no parcelamento também.
+Qual deles você quer que eu detalhe?
 
 <details><summary>ferramentas consultadas neste turno</summary>
 
@@ -28,33 +23,30 @@ search_products({"query": "Takamine"})
 
 **Cliente:** O GD20.
 
-**Loja:** O Takamine GD20 Dreadnought Natural sai por R$ 2.199,00. No PIX fica R$ 2.089,05 (5% de desconto) — e no cartão dá pra parcelar em até 12x sem juros.
+**Loja:** O GD20 é um dreadnought com tampo sólido em cedro, fundo e laterais em sapele, braço de mogno e cordas de aço — timbre quente, ótimo pra fingerstyle. Tem 5 unidades em estoque.
 
-Ele está disponível em estoque. Quer que eu veja o frete pra sua região ou algo mais?
+Preço: R$ 2.199,00. No PIX sai por R$ 2.089,05 (5% de desconto), ou em até 12x de R$ 183,25 sem juros no cartão.
+
+Quer que eu veja o frete pra sua região ou prefere retirar na loja?
 
 <details><summary>ferramentas consultadas neste turno</summary>
 
 ```json
+get_product({"product_id": 95})
+  -> {"product": {"product_id": 95, "name": "Takamine GD20 Dreadnought Natural", "category": "Violões", "price": 2199.0, "promo": null, "availability": "available", "stock": 5, "description": "Violão dreadnought Takamine com tampo sólido em cedro. Excelente para fingerstyle com timbre quente e definido.", "specs": {"back_sides": "Sapele", "color": "Natural", "electronics": "no", "neck": "Mogno", "scale": "650mm", "strings": "steel", "top": "Cedro Sólido"}, "strings": "steel", "electric": false}}
 quote_price({"product_id": 95})
-  -> {"product_id": 95, "name": "Takamine GD20 Dreadnought Natural", "payment_method": "pix", "by_payment_method": {"pix": 2089.05, "debit": 2199.0, "credit": 2199.0, "boleto": 2199.0}, "quantity": 1, "unit_price": 2199.0, "promo": null, "subtotal": 2199.0, "pix_discount": 109.95, "final_total": 2089.05, "shipping": {"cost": 0.0, "rule": "Retirada na loja, sem frete."}, "grand_total": 2089.05, "installments": null, "max_installments_allowed": 12, "notes": []}
+  -> {"product_id": 95, "name": "Takamine GD20 Dreadnought Natural", "payment_method": "pix", "by_payment_method": {"pix": 2089.05, "debit": 2199.0, "credit": 2199.0, "boleto": 2199.0}, "quantity": 1, "unit_price": 2199.0, "promo": null, "subtotal": 2199.0, "pix_discount": 109.95, "final_total": 2089.05, "shipping": {"cost": 0.0, "rule": "Retirada na loja, sem frete."}, "grand_total": 2089.05, "installments": null, "max_installments_allowed": 12, "max_installment_value": 183.25, "notes": []}
 ```
 
 </details>
 
 **Cliente:** Quanto fica no PIX? E em 12x?
 
-**Loja:** No PIX: R$ 2.089,05 (5% de desconto sobre os R$ 2.199,00).
+**Loja:** No PIX fica R$ 2.089,05 (5% de desconto sobre os R$ 2.199,00).
 
-Em 12x sem juros: 12 parcelas de R$ 183,25, totalizando R$ 2.199,00.
+No cartão em 12x sai 12 parcelas de R$ 183,25 sem juros, totalizando R$ 2.199,00.
 
-Vale lembrar que o desconto do PIX não acumula com parcelamento — é um ou outro. Quer que eu veja o frete ou reserve pra você?
+Quer que eu inclua o frete?
 
-<details><summary>ferramentas consultadas neste turno</summary>
-
-```json
-quote_price({"product_id": 95, "payment_method": "credit", "installments": 12})
-  -> {"product_id": 95, "name": "Takamine GD20 Dreadnought Natural", "payment_method": "credit", "by_payment_method": {"pix": 2089.05, "debit": 2199.0, "credit": 2199.0, "boleto": 2199.0}, "quantity": 1, "unit_price": 2199.0, "promo": null, "subtotal": 2199.0, "pix_discount": 0.0, "final_total": 2199.0, "shipping": {"cost": 0.0, "rule": "Retirada na loja, sem frete."}, "grand_total": 2199.0, "installments": {"requested": 12, "allowed": true, "value": 183.25, "reason": null}, "max_installments_allowed": 12, "notes": []}
-```
-
-</details>
+*(nenhuma ferramenta — respondido a partir do manual de políticas)*
 
